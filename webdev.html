@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0a0a">
+<title>Web Dev · Aaryan OS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar"></div>
+
+<!-- ADD LOG MODAL -->
+<div class="modal-bg" id="modal-log">
+  <div class="modal">
+    <div class="modal-title">Add dev log <button class="modal-close" onclick="closeModal('modal-log')">×</button></div>
+    <div class="field"><label>What did you build / do today?</label><textarea id="l-what" rows="3" placeholder="Implemented auth middleware, fixed routing bug..."></textarea></div>
+    <div class="field"><label>Project</label>
+      <select id="l-project">
+        <option value="">General / learning</option>
+        <option value="WanderLust">WanderLust</option>
+        <option value="BattleArena">BattleArena</option>
+        <option value="CodeAlpha internship">CodeAlpha internship</option>
+        <option value="Personal OS">Personal OS</option>
+        <option value="New project">New project</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Tech used</label><input type="text" id="l-tech" placeholder="React, Node.js, MongoDB..."></div>
+    <div class="field"><label>Time spent (minutes)</label><input type="number" id="l-time" placeholder="90"></div>
+    <div class="field"><label>Blockers / issues hit</label><textarea id="l-blocker" rows="2" placeholder="Had trouble with..."></textarea></div>
+    <div class="field"><label>Link (PR / commit / demo)</label><input type="url" id="l-link" placeholder="https://github.com/..."></div>
+    <button class="btn btn-primary btn-full" onclick="saveLog()">Save log</button>
+  </div>
+</div>
+
+<!-- ADD PROJECT MODAL -->
+<div class="modal-bg" id="modal-proj">
+  <div class="modal">
+    <div class="modal-title">Add project <button class="modal-close" onclick="closeModal('modal-proj')">×</button></div>
+    <div class="field"><label>Project name</label><input type="text" id="p-name" placeholder="My Project"></div>
+    <div class="field"><label>Description</label><textarea id="p-desc" rows="2" placeholder="What is this project?"></textarea></div>
+    <div class="field"><label>Tech stack</label><input type="text" id="p-stack" placeholder="Node.js, MongoDB, React..."></div>
+    <div class="field"><label>Status</label>
+      <select id="p-status">
+        <option value="active">Active</option>
+        <option value="planned">Planned</option>
+        <option value="paused">Paused</option>
+        <option value="done">Done / Deployed</option>
+      </select>
+    </div>
+    <div class="field"><label>Live URL</label><input type="url" id="p-live" placeholder="https://..."></div>
+    <div class="field"><label>GitHub URL</label><input type="url" id="p-github" placeholder="https://github.com/..."></div>
+    <button class="btn btn-primary btn-full" onclick="saveProject()">Save project</button>
+  </div>
+</div>
+
+<div class="page fade-in">
+
+  <!-- STATS -->
+  <div class="stat-grid stat-grid-4">
+    <div class="stat-block"><div class="stat-val" id="s-today">0</div><div class="stat-lbl">Today</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total logs</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-time">0h</div><div class="stat-lbl">Time</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Streak</div></div>
+  </div>
+
+  <!-- ACTIVITY CHART -->
+  <p class="sec-label">Activity (last 14 days)</p>
+  <div class="card"><div class="chart-wrap"><canvas id="chart-activity"></canvas></div></div>
+
+  <!-- PROJECTS -->
+  <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Projects</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-proj')">+ Project</button>
+  </p>
+  <div id="project-list" style="margin-bottom:0;"></div>
+
+  <!-- DEV LOGS -->
+  <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Dev log</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-log')">+ Log</button>
+  </p>
+  <div id="log-list" style="padding-bottom:32px;"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+<script>
+initDrawer('webdev.html');
+initTopbar('Web Dev Log');
+
+let actChart = null;
+
+const STATUS_PROJ = {
+  active:   { label: 'Active',    badge: 'badge-green' },
+  planned:  { label: 'Planned',   badge: 'badge-accent' },
+  paused:   { label: 'Paused',    badge: 'badge-amber' },
+  done:     { label: 'Deployed',  badge: 'badge-gray' },
+};
+
+function getLogs() { return DB.get(DB.keys.webdev, []); }
+function getProjects() { return DB.get(DB.keys.projects, [
+  { id: 1, name: 'WanderLust', desc: 'Airbnb-style platform', stack: 'Node.js, Express, MongoDB, EJS, Cloudinary', status: 'done', live: 'https://wanderlust-22cx.onrender.com', github: 'https://github.com/ryan-4u' },
+  { id: 2, name: 'BattleArena', desc: 'Esports tournament management', stack: 'Node.js, Express, MongoDB, RBAC', status: 'done', live: 'https://battlearena-ypvr.onrender.com', github: 'https://github.com/ryan-4u/BattleArena' },
+  { id: 3, name: 'CodeAlpha Internship', desc: 'Social media app + project management tool', stack: 'Node.js, Express, MongoDB', status: 'active', live: '', github: '' },
+]); }
+
+function saveLog() {
+  const what = document.getElementById('l-what').value.trim();
+  if (!what) { toast('Enter what you did'); return; }
+  const logs = getLogs();
+  logs.unshift({
+    id: Date.now(), date: D.today(),
+    what, project: document.getElementById('l-project').value,
+    tech: document.getElementById('l-tech').value.trim(),
+    time: parseInt(document.getElementById('l-time').value) || 0,
+    blocker: document.getElementById('l-blocker').value.trim(),
+    link: document.getElementById('l-link').value.trim(),
+  });
+  DB.set(DB.keys.webdev, logs);
+  closeModal('modal-log');
+  ['l-what','l-tech','l-time','l-blocker','l-link'].forEach(id => document.getElementById(id).value = '');
+  toast('Dev log saved'); render();
+}
+
+function saveProject() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { toast('Enter project name'); return; }
+  const projects = getProjects();
+  projects.unshift({
+    id: Date.now(), name,
+    desc: document.getElementById('p-desc').value.trim(),
+    stack: document.getElementById('p-stack').value.trim(),
+    status: document.getElementById('p-status').value,
+    live: document.getElementById('p-live').value.trim(),
+    github: document.getElementById('p-github').value.trim(),
+  });
+  DB.set(DB.keys.projects, projects);
+  closeModal('modal-proj');
+  ['p-name','p-desc','p-stack','p-live','p-github'].forEach(id => document.getElementById(id).value = '');
+  toast('Project saved'); render();
+}
+
+function deleteLog(id) { if (!confirm('Delete?')) return; DB.set(DB.keys.webdev, getLogs().filter(l => l.id !== id)); render(); }
+function deleteProject(id) { if (!confirm('Delete project?')) return; DB.set(DB.keys.projects, getProjects().filter(p => p.id !== id)); render(); }
+
+function getDevStreak() {
+  const logs = getLogs();
+  const days = [...new Set(logs.map(l => l.date))].sort().reverse();
+  let streak = 0; let expected = D.today();
+  for (const d of days) {
+    if (d === expected) { streak++; const dt = new Date(d); dt.setDate(dt.getDate()-1); expected = dt.toISOString().slice(0,10); }
+    else if (d < expected) break;
+  }
+  return streak;
+}
+
+function render() {
+  const logs = getLogs();
+  const today = D.today();
+  const todayLogs = logs.filter(l => l.date === today);
+  const totalTime = logs.reduce((a,l) => a + (l.time||0), 0);
+
+  document.getElementById('s-today').textContent = todayLogs.length;
+  document.getElementById('s-total').textContent = logs.length;
+  document.getElementById('s-time').textContent = Math.round(totalTime/60) + 'h';
+  document.getElementById('s-streak').textContent = getDevStreak();
+
+  // activity chart
+  const last14 = Array.from({length:14}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-(13-i)); return d.toISOString().slice(0,10); });
+  if (actChart) actChart.destroy();
+  actChart = sparkBar(document.getElementById('chart-activity').getContext('2d'),
+    last14.map(d => D.fmt(d)),
+    last14.map(d => logs.filter(l => l.date === d).reduce((a,l) => a+(l.time||0), 0)),
+    '#4caf7d');
+
+  // projects
+  const projects = getProjects();
+  document.getElementById('project-list').innerHTML = projects.length ? projects.map(p => {
+    const sm = STATUS_PROJ[p.status] || STATUS_PROJ.active;
+    const projLogs = logs.filter(l => l.project === p.name);
+    return `<div class="card" style="margin-bottom:8px;">
+      <div class="row-between" style="margin-bottom:6px;">
+        <div style="font-weight:600;font-size:14px;">${p.name}</div>
+        <span class="badge ${sm.badge}">${sm.label}</span>
+      </div>
+      ${p.desc ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">${p.desc}</div>` : ''}
+      ${p.stack ? `<div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:8px;">${p.stack}</div>` : ''}
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px;">${projLogs.length} logs · ${Math.round(projLogs.reduce((a,l)=>a+(l.time||0),0)/60*10)/10}h</div>
+      <div class="row" style="gap:8px;">
+        ${p.live ? `<a href="${p.live}" target="_blank" class="btn btn-ghost btn-sm">Live ↗</a>` : ''}
+        ${p.github ? `<a href="${p.github}" target="_blank" class="btn btn-ghost btn-sm">GitHub ↗</a>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id})" style="margin-left:auto;">Delete</button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="card" style="margin-bottom:8px;"><div class="empty">No projects. Add one above.</div></div>';
+
+  // logs
+  const logEl = document.getElementById('log-list');
+  if (!logs.length) { logEl.innerHTML = '<div class="empty">No dev logs yet. What did you build today?</div>'; return; }
+  logEl.innerHTML = logs.slice(0, 30).map(l =>
+    `<div class="card" style="margin-bottom:8px;">
+      <div class="row-between" style="margin-bottom:6px;">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${D.fmtFull(l.date)}</span>
+        <div class="row" style="gap:6px;">
+          ${l.project ? `<span class="badge badge-accent">${l.project}</span>` : ''}
+          ${l.time ? `<span class="badge badge-gray">${l.time}m</span>` : ''}
+        </div>
+      </div>
+      <div style="font-size:13px;margin-bottom:6px;line-height:1.5;">${l.what}</div>
+      ${l.tech ? `<div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:4px;">${l.tech}</div>` : ''}
+      ${l.blocker ? `<div style="font-size:12px;color:var(--amber);margin-bottom:6px;"><span style="font-family:var(--mono);font-size:10px;">BLOCKER  </span>${l.blocker}</div>` : ''}
+      <div class="row-between">
+        ${l.link ? `<a href="${l.link}" target="_blank" style="font-size:11px;color:var(--accent);font-family:var(--mono);">Link ↗</a>` : '<span></span>'}
+        <button class="btn btn-danger btn-sm" onclick="deleteLog(${l.id})">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+render();
+</script>
+</body>
+</html>

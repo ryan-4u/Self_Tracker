@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<title>Aaryan OS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"></div>
+
+<div class="page fade-in">
+
+  <!-- HERO -->
+  <div style="padding: 20px 0 8px;">
+    <div class="accent-line"></div>
+    <div style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;" id="day-label">DAY 1</div>
+    <div style="font-size:24px;font-weight:700;margin-top:4px;letter-spacing:-0.5px;" id="greeting">Good morning.</div>
+    <div style="font-size:13px;color:var(--text2);margin-top:4px;" id="phase-label">Phase 1 — Reset & Build</div>
+  </div>
+
+  <!-- TODAY SCORE -->
+  <p class="sec-label">Today at a glance</p>
+  <div class="card" id="today-score-card">
+    <div class="row-between" style="margin-bottom:12px;">
+      <div>
+        <div style="font-size:13px;color:var(--text2);">Overall score</div>
+        <div style="font-size:32px;font-weight:700;line-height:1.1;" id="overall-score">—</div>
+      </div>
+      <div style="text-align:right;">
+        <div id="score-badge" class="badge badge-gray" style="font-size:13px;padding:4px 12px;">loading</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono);" id="score-detail"></div>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-track"><div class="prog-fill" id="overall-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- 4 PILLARS -->
+  <div class="stat-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+    <div class="stat-block" style="text-align:left;cursor:pointer;" onclick="location.href='habits.html'">
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">HABITS</div>
+      <div style="font-size:22px;font-weight:700;" id="p-habits">—</div>
+      <div class="prog-wrap" style="margin-top:8px;"><div class="prog-track"><div class="prog-fill green" id="pb-habits" style="width:0%"></div></div></div>
+    </div>
+    <div class="stat-block" style="text-align:left;cursor:pointer;" onclick="location.href='dsa.html'">
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">DSA TODAY</div>
+      <div style="font-size:22px;font-weight:700;" id="p-dsa">—</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;" id="p-dsa-total"></div>
+    </div>
+    <div class="stat-block" style="text-align:left;cursor:pointer;" onclick="location.href='webdev.html'">
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">WEB DEV</div>
+      <div style="font-size:22px;font-weight:700;" id="p-webdev">—</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;" id="p-webdev-sub"></div>
+    </div>
+    <div class="stat-block" style="text-align:left;cursor:pointer;" onclick="location.href='interview.html'">
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">INTERVIEWS</div>
+      <div style="font-size:22px;font-weight:700;" id="p-interview">—</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;" id="p-interview-sub"></div>
+    </div>
+  </div>
+
+  <!-- HABIT STREAK MINI -->
+  <p class="sec-label">Habit streaks</p>
+  <div class="card" id="habit-mini"></div>
+
+  <!-- 7-DAY SCORE CHART -->
+  <p class="sec-label">7-day habit score</p>
+  <div class="card">
+    <div class="chart-wrap"><canvas id="chart-week"></canvas></div>
+  </div>
+
+  <!-- LAST CHECK-IN -->
+  <p class="sec-label">Last check-in</p>
+  <div class="card" id="last-checkin">
+    <div class="empty">No check-in yet today.<br>Head to Nightly check-in.</div>
+  </div>
+
+  <!-- DSA BREAKDOWN -->
+  <p class="sec-label">DSA problem breakdown</p>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;" id="dsa-breakdown"></div>
+    <div class="chart-wrap" style="height:140px;"><canvas id="chart-dsa"></canvas></div>
+  </div>
+
+  <!-- INTERVIEW PIPELINE -->
+  <p class="sec-label">Interview pipeline</p>
+  <div class="card" id="interview-pipeline">
+    <div class="empty">No applications tracked yet.</div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <p class="sec-label">Quick actions</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:32px;">
+    <button class="btn btn-ghost btn-full" onclick="location.href='checkin.html'">+ Check-in</button>
+    <button class="btn btn-ghost btn-full" onclick="location.href='dsa.html'">+ DSA problem</button>
+    <button class="btn btn-ghost btn-full" onclick="location.href='webdev.html'">+ Dev log</button>
+    <button class="btn btn-ghost btn-full" onclick="location.href='interview.html'">+ Application</button>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+<script>
+initDrawer('index.html');
+initTopbar('Progress');
+
+function greet() {
+  const h = new Date().getHours();
+  const g = h < 12 ? 'Good morning.' : h < 17 ? 'Good afternoon.' : 'Good evening.';
+  document.getElementById('greeting').textContent = g;
+  const meta = DB.get(DB.keys.meta, { startDate: D.today() });
+  const day = D.daysSince(meta.startDate) + 1;
+  document.getElementById('day-label').textContent = `DAY ${day} · OPERATION BUILD MYSELF`;
+  document.getElementById('phase-label').textContent = DB.get('aos_phase', APP.phase);
+}
+
+function renderTodayScore() {
+  const habits = getTodayHabitScore();
+  const dsa = getDSAStats();
+  const webLogs = DB.get(DB.keys.webdev, []);
+  const todayWebLog = webLogs.filter(l => l.date === D.today()).length;
+
+  let score = 0, max = 0;
+  score += habits.pct * 0.5; max += 50;
+  const dsaScore = Math.min(dsa.today * 25, 25); score += dsaScore; max += 25;
+  const webScore = todayWebLog > 0 ? 25 : 0; score += webScore; max += 25;
+  const pct = Math.round(score);
+
+  document.getElementById('overall-score').textContent = pct + '%';
+  document.getElementById('overall-bar').style.width = pct + '%';
+  document.getElementById('score-detail').textContent = `habits ${habits.done}/${habits.total} · dsa ${dsa.today} · dev ${todayWebLog}`;
+
+  const badge = document.getElementById('score-badge');
+  if (pct >= 80) { badge.className = 'badge badge-green'; badge.textContent = 'Strong day'; }
+  else if (pct >= 55) { badge.className = 'badge badge-amber'; badge.textContent = 'Decent'; }
+  else { badge.className = 'badge badge-gray'; badge.textContent = 'Need more'; }
+
+  document.getElementById('p-habits').textContent = habits.done + '/' + habits.total;
+  document.getElementById('pb-habits').style.width = habits.pct + '%';
+  document.getElementById('p-dsa').textContent = dsa.today;
+  document.getElementById('p-dsa-total').textContent = 'total: ' + dsa.total;
+
+  const webLast = webLogs.length ? webLogs[webLogs.length - 1] : null;
+  document.getElementById('p-webdev').textContent = todayWebLog ? 'logged' : 'none';
+  document.getElementById('p-webdev-sub').textContent = webLast ? D.fmt(webLast.date) : '—';
+
+  const iv = getInterviewStats();
+  document.getElementById('p-interview').textContent = iv.total;
+  document.getElementById('p-interview-sub').textContent = `${iv.inProgress} active`;
+}
+
+function renderHabitMini() {
+  const data = DB.get(DB.keys.habits, {});
+  const today = D.today();
+  const rows = HABITS_DEFAULT.map(h => {
+    let streak = 0;
+    let d = new Date(); d.setHours(0,0,0,0);
+    while (true) {
+      const k = d.toISOString().slice(0,10);
+      if (data[k] && data[k][h.id]) { streak++; d.setDate(d.getDate()-1); }
+      else break;
+      if (streak > 200) break;
+    }
+    const done = !!(data[today] && data[today][h.id]);
+    return `<div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:13px;">${h.name}</div>
+      <div class="row" style="gap:8px;">
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono);">${streak > 0 ? streak + 'd' : '—'}</span>
+        <div style="width:10px;height:10px;border-radius:50%;background:${done ? 'var(--green)' : 'var(--bg3)'};"></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('habit-mini').innerHTML = rows || '<div class="empty">No habit data.</div>';
+}
+
+function render7DayChart() {
+  const data = DB.get(DB.keys.habits, {});
+  const dates = D.weekDates(0);
+  const labels = dates.map(d => D.fmt(d));
+  const scores = dates.map(d => {
+    if (d > D.today()) return null;
+    const dd = data[d] || {};
+    return Math.round(HABITS_DEFAULT.filter(h => dd[h.id]).length / HABITS_DEFAULT.length * 100);
+  });
+  sparkBar(document.getElementById('chart-week').getContext('2d'), labels, scores, '#4fc3f7');
+}
+
+function renderLastCheckin() {
+  const logs = DB.get(DB.keys.checkin, []);
+  if (!logs.length) return;
+  const last = logs[0];
+  const el = document.getElementById('last-checkin');
+  el.innerHTML = `
+    <div class="row-between" style="margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--text2);font-family:var(--mono);">${D.fmtFull(last.date || D.today())}</span>
+      <span class="badge badge-accent">${last.score}/${HABITS_DEFAULT.length}</span>
+    </div>
+    ${last.win ? `<div style="font-size:13px;margin-bottom:4px;"><span style="color:var(--green);font-family:var(--mono);font-size:10px;">WIN  </span>${last.win}</div>` : ''}
+    ${last.tmrw ? `<div style="font-size:13px;"><span style="color:var(--accent);font-family:var(--mono);font-size:10px;">TMR  </span>${last.tmrw}</div>` : ''}
+  `;
+}
+
+function renderDSABreakdown() {
+  const s = getDSAStats();
+  const stats = [
+    { label: 'TOTAL', val: s.total, color: 'var(--accent)' },
+    { label: 'DONE', val: s.done, color: 'var(--green)' },
+    { label: 'RETRY', val: s.retry, color: 'var(--amber)' },
+    { label: 'WATCHED', val: s.watched, color: 'var(--text3)' },
+  ];
+  document.getElementById('dsa-breakdown').innerHTML = stats.map(st =>
+    `<div style="text-align:center;">
+      <div style="font-size:20px;font-weight:700;color:${st.color};">${st.val}</div>
+      <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px;">${st.label}</div>
+    </div>`).join('');
+  if (s.total > 0) {
+    doughnut(document.getElementById('chart-dsa').getContext('2d'),
+      ['Done', 'Retry', 'Watched', 'Hint'],
+      [s.done, s.retry, s.watched, s.total - s.done - s.retry - s.watched],
+      ['#4caf7d', '#f0a030', '#555', '#4fc3f7']);
+  }
+}
+
+function renderInterviewPipeline() {
+  const apps = DB.get(DB.keys.interview, []);
+  if (!apps.length) return;
+  const active = apps.filter(a => !['offer','rejected'].includes(a.status)).slice(0, 3);
+  const el = document.getElementById('interview-pipeline');
+  const statusColor = { applied: 'badge-gray', screening: 'badge-accent', r1: 'badge-amber', r2: 'badge-amber', r3: 'badge-amber', offer: 'badge-green', rejected: 'badge-red' };
+  el.innerHTML = active.map(a => `
+    <div class="row-between" style="padding:7px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;">${a.company}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);">${a.role || '—'}</div>
+      </div>
+      <span class="badge ${statusColor[a.status] || 'badge-gray'}">${a.status}</span>
+    </div>`).join('') + (apps.length > 3 ? `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);padding-top:8px;">+${apps.length - 3} more</div>` : '');
+}
+
+greet();
+renderTodayScore();
+renderHabitMini();
+render7DayChart();
+renderLastCheckin();
+renderDSABreakdown();
+renderInterviewPipeline();
+</script>
+</body>
+</html>

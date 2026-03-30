@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0a0a">
+<title>Habits · Aaryan OS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar"></div>
+<div class="page fade-in">
+
+  <!-- STATS -->
+  <p class="sec-label">This week</p>
+  <div class="stat-grid stat-grid-4">
+    <div class="stat-block"><div class="stat-val" id="s-today">0</div><div class="stat-lbl">Today</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-week">0%</div><div class="stat-lbl">Week</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Streak</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-days">0</div><div class="stat-lbl">Days</div></div>
+  </div>
+
+  <!-- WEEK GRID -->
+  <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Weekly grid</span>
+    <span style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="shiftWeek(-1)">&#8592;</button>
+      <span style="font-size:11px;color:var(--text2);font-family:var(--mono);line-height:28px;" id="week-range"></span>
+      <button class="btn btn-ghost btn-sm" id="btn-next" onclick="shiftWeek(1)">&#8594;</button>
+    </span>
+  </p>
+  <div class="card" style="padding:12px 8px;">
+    <div class="scroll-x">
+      <table style="width:100%;border-collapse:collapse;min-width:340px;">
+        <thead id="grid-head"></thead>
+        <tbody id="grid-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 4-WEEK TREND -->
+  <p class="sec-label">4-week trend</p>
+  <div class="card"><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
+
+  <!-- PER-HABIT BARS -->
+  <p class="sec-label">Weekly completion per habit</p>
+  <div class="card" id="habit-bars"></div>
+
+  <!-- BEST STREAKS -->
+  <p class="sec-label">Best streaks</p>
+  <div class="card" id="streak-list" style="padding-bottom:4px;"></div>
+
+  <div style="padding-bottom:32px;"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+<script>
+initDrawer('habits.html');
+initTopbar('Habits');
+
+const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let weekOffset = 0;
+let data = DB.get(DB.keys.habits, {});
+
+function save() { DB.set(DB.keys.habits, data); }
+
+function toggle(hid, dateKey) {
+  if (D.isFuture(dateKey)) return;
+  if (!data[dateKey]) data[dateKey] = {};
+  data[dateKey][hid] = !data[dateKey][hid];
+  save(); render();
+}
+
+function getStreak(hid) {
+  let streak = 0;
+  const d = new Date(); d.setHours(0,0,0,0);
+  while (true) {
+    const k = d.toISOString().slice(0,10);
+    if (data[k] && data[k][hid]) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+    if (streak > 365) break;
+  }
+  return streak;
+}
+
+function getBestStreak(hid) {
+  const keys = Object.keys(data).sort();
+  let best = 0, cur = 0, prev = null;
+  keys.forEach(k => {
+    if (data[k] && data[k][hid]) {
+      if (prev) {
+        const diff = (new Date(k) - new Date(prev)) / 86400000;
+        cur = diff === 1 ? cur + 1 : 1;
+      } else cur = 1;
+      if (cur > best) best = cur;
+      prev = k;
+    } else { cur = 0; prev = null; }
+  });
+  return best;
+}
+
+function shiftWeek(dir) {
+  weekOffset += dir;
+  if (weekOffset > 0) weekOffset = 0;
+  render();
+}
+
+let trendChart = null;
+
+function render() {
+  data = DB.get(DB.keys.habits, {});
+  const today = D.today();
+  const week = D.weekDates(weekOffset);
+
+  // week range label
+  const fmt = iso => D.fmt(iso);
+  document.getElementById('week-range').textContent = fmt(week[0]) + '–' + fmt(week[6]);
+  document.getElementById('btn-next').disabled = weekOffset >= 0;
+
+  // stats
+  const todayData = data[today] || {};
+  const todayDone = HABITS_DEFAULT.filter(h => todayData[h.id]).length;
+  document.getElementById('s-today').textContent = todayDone + '/' + HABITS_DEFAULT.length;
+
+  const pastDays = week.filter(d => d <= today);
+  let weekDone = 0, weekPossible = pastDays.length * HABITS_DEFAULT.length;
+  pastDays.forEach(d => { HABITS_DEFAULT.forEach(h => { if (data[d] && data[d][h.id]) weekDone++; }); });
+  document.getElementById('s-week').textContent = weekPossible ? Math.round(weekDone / weekPossible * 100) + '%' : '0%';
+
+  let maxStreak = 0;
+  HABITS_DEFAULT.forEach(h => { const s = getStreak(h.id); if (s > maxStreak) maxStreak = s; });
+  document.getElementById('s-streak').textContent = maxStreak;
+  document.getElementById('s-days').textContent = Object.keys(data).length;
+
+  // grid header
+  const thead = document.getElementById('grid-head');
+  thead.innerHTML = '<tr><th style="text-align:left;padding:0 4px 8px;font-size:10px;color:var(--text3);font-family:var(--mono);font-weight:600;min-width:90px;">Habit</th>' +
+    week.map((d, i) => {
+      const isT = d === today;
+      return `<th style="padding:0 2px 8px;font-size:10px;color:${isT ? 'var(--accent)' : 'var(--text3)'};font-family:var(--mono);font-weight:${isT?'600':'400'};text-align:center;">${DAYS_SHORT[i]}<br><span style="font-size:9px;">${parseInt(d.slice(8))}</span></th>`;
+    }).join('') + '</tr>';
+
+  // grid body
+  const tbody = document.getElementById('grid-body');
+  tbody.innerHTML = HABITS_DEFAULT.map(h => {
+    const streak = getStreak(h.id);
+    const cells = week.map(d => {
+      const done = !!(data[d] && data[d][h.id]);
+      const future = D.isFuture(d);
+      let cls = 'habit-dot';
+      if (done) cls += ' done';
+      if (future) cls += ' future';
+      return `<td style="padding:3px 2px;text-align:center;"><div class="${cls}" onclick="toggle('${h.id}','${d}')" style="margin:0 auto;">${done ? '✓' : ''}</div></td>`;
+    }).join('');
+    return `<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:6px 4px;min-width:90px;">
+        <div style="font-size:12px;font-weight:500;">${h.name}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);">${streak > 0 ? streak + 'd' : '—'}</div>
+      </td>${cells}</tr>`;
+  }).join('');
+
+  // per-habit bars
+  const bars = document.getElementById('habit-bars');
+  bars.innerHTML = HABITS_DEFAULT.map(h => {
+    const done = pastDays.filter(d => data[d] && data[d][h.id]).length;
+    const pct = pastDays.length ? Math.round(done / pastDays.length * 100) : 0;
+    const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:12px;width:100px;flex-shrink:0;">${h.name}</div>
+      <div style="flex:1;margin:0 10px;"><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${color};"></div></div></div>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);width:28px;text-align:right;">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // streak list
+  document.getElementById('streak-list').innerHTML = HABITS_DEFAULT.map(h => {
+    const cur = getStreak(h.id);
+    const best = getBestStreak(h.id);
+    return `<div class="row-between" style="padding:7px 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:13px;">${h.name}</div>
+      <div class="row" style="gap:12px;">
+        <div style="text-align:right;"><div style="font-size:14px;font-weight:600;color:var(--green);">${cur}</div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);">NOW</div></div>
+        <div style="text-align:right;"><div style="font-size:14px;font-weight:600;color:var(--accent);">${best}</div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);">BEST</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 4-week trend chart
+  const weeks4 = [-3,-2,-1,0].map(o => {
+    const wk = D.weekDates(o);
+    const past = wk.filter(d => d <= today);
+    let done = 0, possible = past.length * HABITS_DEFAULT.length;
+    past.forEach(d => HABITS_DEFAULT.forEach(h => { if (data[d] && data[d][h.id]) done++; }));
+    return possible ? Math.round(done / possible * 100) : 0;
+  });
+  if (trendChart) trendChart.destroy();
+  trendChart = sparkLine(document.getElementById('chart-trend').getContext('2d'),
+    ['Week -3', 'Week -2', 'Last week', 'This week'],
+    [{ data: weeks4, label: 'Habit %', color: '#4fc3f7' }]);
+}
+
+render();
+</script>
+</body>
+</html>
