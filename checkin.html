@@ -11,49 +11,45 @@
 <div class="topbar"></div>
 <div class="page fade-in">
 
-  <!-- STATS -->
   <div class="stat-grid stat-grid-4" style="margin-bottom:0;">
     <div class="stat-block"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Streak</div></div>
     <div class="stat-block"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-block"><div class="stat-val" id="s-avg">—</div><div class="stat-lbl">Avg score</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-avg">—</div><div class="stat-lbl">Avg</div></div>
     <div class="stat-block"><div class="stat-val" id="s-best">—</div><div class="stat-lbl">Best</div></div>
   </div>
 
-  <!-- CHECK-IN FORM -->
   <p class="sec-label">Tonight's check-in</p>
   <div class="card">
     <div style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:12px;" id="checkin-date"></div>
 
-    <!-- HABITS -->
-    <div style="font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:1px;margin-bottom:8px;">HABITS TODAY</div>
+    <div style="font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:1px;margin-bottom:8px;">HABITS TODAY</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;" id="habit-grid"></div>
 
-    <!-- SCORE -->
-    <div class="row-between" style="margin-bottom:14px;">
+    <div class="row-between" style="margin-bottom:10px;">
       <div style="font-size:13px;color:var(--text2);">Score</div>
       <div class="row" style="gap:8px;">
         <span style="font-size:22px;font-weight:700;" id="ci-score">0</span>
-        <span style="font-size:13px;color:var(--text3);font-family:var(--mono);">/ 8</span>
+        <span style="font-size:13px;color:var(--text3);font-family:var(--mono);" id="ci-denom">/8</span>
         <span class="badge" id="ci-badge" style="margin-left:4px;"></span>
       </div>
     </div>
-    <div class="prog-wrap" style="margin-bottom:16px;">
+    <div class="prog-wrap" style="margin-bottom:14px;">
       <div class="prog-track"><div class="prog-fill" id="ci-bar" style="width:0%"></div></div>
     </div>
 
     <!-- ENERGY + FOCUS -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
       <div>
-        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;">ENERGY</div>
-        <div style="display:flex;gap:4px;" id="energy-btns">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;letter-spacing:1px;">ENERGY</div>
+        <div style="display:flex;gap:4px;" id="energy-row">
           <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="setEnergy('low',this)">Low</button>
           <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="setEnergy('med',this)">Med</button>
           <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="setEnergy('high',this)">High</button>
         </div>
       </div>
       <div>
-        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;">FOCUS</div>
-        <div style="display:flex;gap:4px;" id="focus-btns">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;letter-spacing:1px;">FOCUS</div>
+        <div style="display:flex;gap:4px;" id="focus-row">
           <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;" onclick="setFocus('scattered',this)">Off</button>
           <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;" onclick="setFocus('decent',this)">Ok</button>
           <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;" onclick="setFocus('locked',this)">On</button>
@@ -61,22 +57,32 @@
       </div>
     </div>
 
-    <div class="field"><label>Win of the day</label><textarea id="ci-win" rows="2" placeholder="One thing you actually did..."></textarea></div>
+    <div class="field"><label>Win of the day</label><textarea id="ci-win" rows="2" placeholder="One thing you actually did today..."></textarea></div>
     <div class="field"><label>What pulled you off track</label><textarea id="ci-loss" rows="2" placeholder="Honest answer..."></textarea></div>
-    <div class="field"><label>Tomorrow's one priority</label><textarea id="ci-tmrw" rows="2" placeholder="The one thing that must happen..."></textarea></div>
 
-    <button class="btn btn-primary btn-full" onclick="saveCheckin()">Save check-in</button>
+    <!-- TOMORROW GOALS -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:12px;">
+      <div style="font-size:10px;font-family:var(--mono);color:var(--accent);letter-spacing:1px;margin-bottom:10px;">TOMORROW'S GOALS</div>
+      <div class="field" style="margin-bottom:8px;"><label>Study goal</label><textarea id="ci-goal-study" rows="2" placeholder="DSA: 2 problems on trees&#10;Skill: finish React hooks chapter..."></textarea></div>
+      <div class="field" style="margin-bottom:8px;"><label>Other goal</label><textarea id="ci-goal-other" rows="2" placeholder="Wake at 5AM, physical routine, no phone..."></textarea></div>
+      <div class="field" style="margin-bottom:0;"><label>One non-negotiable</label><input type="text" id="ci-tmrw" placeholder="The one thing that must happen no matter what..."></div>
+    </div>
+
+    <!-- MOOD — built by JS -->
+    <div class="field">
+      <label>Overall mood (1–10)</label>
+      <div id="mood-row" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;"></div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="saveCheckin()" style="margin-top:4px;">Save check-in</button>
   </div>
 
-  <!-- TREND CHART -->
   <p class="sec-label">Score trend (last 14 days)</p>
   <div class="card"><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
 
-  <!-- ENERGY/FOCUS ANALYSIS -->
-  <p class="sec-label">Energy & focus (last 7)</p>
+  <p class="sec-label">Energy &amp; focus (last 7)</p>
   <div class="card" id="energy-analysis"></div>
 
-  <!-- LOG -->
   <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
     <span>Past check-ins</span>
     <button class="btn btn-ghost btn-sm" onclick="if(confirm('Clear all?')){DB.set(DB.keys.checkin,[]);render();}">Clear</button>
@@ -91,22 +97,44 @@
 initDrawer('checkin.html');
 initTopbar('Nightly check-in');
 
-let ciState = { habits: {}, energy: null, focus: null };
+let ciState = { habits:{}, energy:null, focus:null, mood:null };
 let trendChart = null;
 
-const VERDICTS = ['—','Getting there','Getting there','Solid','Good day','Strong day','Crushing it','Locked in','Perfect'];
-const ENERGY_COLORS = { low: 'var(--red)', med: 'var(--amber)', high: 'var(--green)' };
-const FOCUS_COLORS = { scattered: 'var(--red)', decent: 'var(--amber)', locked: 'var(--green)' };
+const VERDICTS = ['—','Getting there','Getting there','Solid','Good day','Strong day','Crushing it','Locked in','Locked in','Perfect'];
+const EC = { low:'var(--red)', med:'var(--amber)', high:'var(--green)' };
+const FC = { scattered:'var(--red)', decent:'var(--amber)', locked:'var(--green)' };
 
-document.getElementById('checkin-date').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+document.getElementById('checkin-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+
+// ── BUILD MOOD BUTTONS via JS (fixes template literal issue) ──
+function buildMoodRow() {
+  const row = document.getElementById('mood-row');
+  row.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-ghost btn-sm';
+    btn.style.minWidth = '34px';
+    btn.textContent = i;
+    btn.dataset.val = i;
+    btn.onclick = function() { setMood(parseInt(this.dataset.val), this); };
+    row.appendChild(btn);
+  }
+}
 
 function buildHabitGrid() {
-  document.getElementById('habit-grid').innerHTML = HABITS_DEFAULT.map(h =>
-    `<div onclick="toggleHabit('${h.id}',this)" id="ch-${h.id}"
-      style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:12px;">${h.name}</span>
-      <span style="font-size:12px;color:transparent;" id="chk-${h.id}">✓</span>
-    </div>`).join('');
+  const habits = getActiveHabits();
+  document.getElementById('ci-denom').textContent = '/' + habits.length;
+  const grid = document.getElementById('habit-grid');
+  grid.innerHTML = '';
+  habits.forEach(h => {
+    const div = document.createElement('div');
+    div.id = 'ch-' + h.id;
+    div.style.cssText = 'padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between;';
+    div.innerHTML = '<span style="font-size:12px;">' + h.name + '</span><span style="font-size:12px;color:transparent;" id="chk-' + h.id + '">✓</span>';
+    div.onclick = function() { toggleHabit(h.id, this); };
+    grid.appendChild(div);
+  });
 }
 
 function toggleHabit(id, el) {
@@ -114,89 +142,101 @@ function toggleHabit(id, el) {
   const done = ciState.habits[id];
   el.style.background = done ? 'rgba(76,175,125,0.12)' : 'var(--bg2)';
   el.style.borderColor = done ? 'var(--green)' : 'var(--border)';
-  document.getElementById('chk-' + id).style.color = done ? 'var(--green)' : 'transparent';
+  const chk = document.getElementById('chk-' + id);
+  if (chk) chk.style.color = done ? 'var(--green)' : 'transparent';
   updateScore();
 }
 
 function updateScore() {
+  const habits = getActiveHabits();
   const done = Object.values(ciState.habits).filter(Boolean).length;
-  const pct = Math.round(done / 8 * 100);
+  const pct = habits.length ? Math.round(done / habits.length * 100) : 0;
   document.getElementById('ci-score').textContent = done;
   document.getElementById('ci-bar').style.width = pct + '%';
   const badge = document.getElementById('ci-badge');
-  badge.textContent = VERDICTS[done] || '—';
-  badge.className = 'badge ' + (pct >= 75 ? 'badge-green' : pct >= 50 ? 'badge-amber' : 'badge-gray');
+  badge.textContent = VERDICTS[Math.min(done, VERDICTS.length-1)] || '—';
+  badge.className = 'badge ' + (pct>=75?'badge-green':pct>=50?'badge-amber':'badge-gray');
 }
 
 function setEnergy(val, el) {
   ciState.energy = val;
-  document.querySelectorAll('#energy-btns button').forEach(b => { b.className = 'btn btn-ghost btn-sm'; b.style.flex = '1'; });
-  el.style.background = ENERGY_COLORS[val] + '33';
-  el.style.borderColor = ENERGY_COLORS[val];
-  el.style.color = ENERGY_COLORS[val];
+  document.querySelectorAll('#energy-row button').forEach(b => { b.style.background=''; b.style.borderColor=''; b.style.color=''; });
+  el.style.background = EC[val] + '33'; el.style.borderColor = EC[val]; el.style.color = EC[val];
 }
 
 function setFocus(val, el) {
   ciState.focus = val;
-  document.querySelectorAll('#focus-btns button').forEach(b => { b.className = 'btn btn-ghost btn-sm'; b.style.flex = '1'; b.style.fontSize = '11px'; });
-  el.style.background = FOCUS_COLORS[val] + '33';
-  el.style.borderColor = FOCUS_COLORS[val];
-  el.style.color = FOCUS_COLORS[val];
+  document.querySelectorAll('#focus-row button').forEach(b => { b.style.background=''; b.style.borderColor=''; b.style.color=''; });
+  el.style.background = FC[val] + '33'; el.style.borderColor = FC[val]; el.style.color = FC[val];
+}
+
+function setMood(val, el) {
+  ciState.mood = val;
+  document.querySelectorAll('#mood-row button').forEach(b => { b.style.background=''; b.style.borderColor=''; b.style.color=''; });
+  const col = val >= 8 ? 'var(--green)' : val >= 5 ? 'var(--amber)' : 'var(--red)';
+  el.style.background = col + '33'; el.style.borderColor = col; el.style.color = col;
 }
 
 function saveCheckin() {
+  const habits = getActiveHabits();
   const done = Object.values(ciState.habits).filter(Boolean).length;
   const entry = {
-    id: Date.now(),
-    date: D.today(),
-    habits: { ...ciState.habits },
-    score: done,
-    energy: ciState.energy,
-    focus: ciState.focus,
-    win: document.getElementById('ci-win').value.trim(),
-    loss: document.getElementById('ci-loss').value.trim(),
-    tmrw: document.getElementById('ci-tmrw').value.trim(),
+    id: Date.now(), date: D.today(),
+    habits: {...ciState.habits}, score: done,
+    energy: ciState.energy, focus: ciState.focus, mood: ciState.mood,
+    win:       document.getElementById('ci-win').value.trim(),
+    loss:      document.getElementById('ci-loss').value.trim(),
+    goalStudy: document.getElementById('ci-goal-study').value.trim(),
+    goalOther: document.getElementById('ci-goal-other').value.trim(),
+    tmrw:      document.getElementById('ci-tmrw').value.trim(),
   };
   const logs = DB.get(DB.keys.checkin, []);
   logs.unshift(entry);
   DB.set(DB.keys.checkin, logs);
-  // reset
-  ciState = { habits: {}, energy: null, focus: null };
+
+  // reset state
+  ciState = { habits:{}, energy:null, focus:null, mood:null };
   buildHabitGrid();
   updateScore();
-  document.querySelectorAll('#energy-btns button,#focus-btns button').forEach(b => { b.style.background=''; b.style.borderColor=''; b.style.color=''; });
-  ['ci-win','ci-loss','ci-tmrw'].forEach(id => document.getElementById(id).value = '');
-  toast('Check-in saved ✓'); render();
+  document.querySelectorAll('#energy-row button, #focus-row button').forEach(b => { b.style.background=''; b.style.borderColor=''; b.style.color=''; });
+  buildMoodRow();
+  ['ci-win','ci-loss','ci-goal-study','ci-goal-other','ci-tmrw'].forEach(id => document.getElementById(id).value = '');
+  toast('Check-in saved ✓');
+  render();
 }
 
 function render() {
   const logs = DB.get(DB.keys.checkin, []);
+  const habits = getActiveHabits();
 
-  // stats
   document.getElementById('s-total').textContent = logs.length;
   if (logs.length) {
-    const avg = logs.reduce((a,l) => a + l.score, 0) / logs.length;
+    const avg = logs.reduce((a,l)=>a+l.score,0) / logs.length;
     document.getElementById('s-avg').textContent = avg.toFixed(1);
-    document.getElementById('s-best').textContent = Math.max(...logs.map(l => l.score));
+    document.getElementById('s-best').textContent = Math.max(...logs.map(l=>l.score));
   }
+
+  // streak
   let streak = 0;
-  const today = D.today(); const td = new Date(today);
+  const today = D.today();
   for (let i = 0; i < logs.length; i++) {
-    const d = new Date(td); d.setDate(td.getDate() - i);
-    const expected = d.toISOString().slice(0,10);
-    if (logs[i]?.date === expected) streak++; else break;
+    const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() - i);
+    if (logs[i]?.date === d.toISOString().slice(0,10)) streak++; else break;
   }
   document.getElementById('s-streak').textContent = streak;
 
   // trend chart
-  const last14 = Array.from({length:14}, (_,i) => { const d = new Date(); d.setDate(d.getDate()-(13-i)); return d.toISOString().slice(0,10); });
+  const last14 = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i); last14.push(d.toISOString().slice(0,10));
+  }
   const scoreByDate = {};
   logs.forEach(l => { scoreByDate[l.date] = l.score; });
-  if (trendChart) trendChart.destroy();
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
   trendChart = sparkLine(
     document.getElementById('chart-trend').getContext('2d'),
     last14.map(d => D.fmt(d)),
-    [{ data: last14.map(d => scoreByDate[d] ?? null), label: 'Score', color: '#4fc3f7' }]
+    [{data: last14.map(d => scoreByDate[d] !== undefined ? scoreByDate[d] : null), label:'Score', color:'#4fc3f7'}]
   );
 
   // energy/focus analysis
@@ -204,34 +244,49 @@ function render() {
   const ea = document.getElementById('energy-analysis');
   if (recent7.length) {
     ea.innerHTML = recent7.map(l =>
-      `<div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${D.fmt(l.date)}</span>
-        <div class="row" style="gap:8px;">
-          <span style="font-size:11px;color:${ENERGY_COLORS[l.energy]||'var(--text3)'};">${l.energy||'—'}</span>
-          <span style="font-size:11px;color:${FOCUS_COLORS[l.focus]||'var(--text3)'};">${l.focus||'—'}</span>
-          <span class="badge ${l.score>=6?'badge-green':l.score>=4?'badge-amber':'badge-gray'}">${l.score}/8</span>
-        </div>
-      </div>`).join('');
-  } else ea.innerHTML = '<div class="empty">Check-in a few days to see analysis.</div>';
+      '<div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--border);">' +
+      '<span style="font-size:11px;font-family:var(--mono);color:var(--text3);">' + D.fmt(l.date) + '</span>' +
+      '<div class="row" style="gap:10px;">' +
+        (l.mood ? '<span style="font-size:11px;color:'+(l.mood>=8?'var(--green)':l.mood>=5?'var(--amber)':'var(--red)')+';font-family:var(--mono);">mood:'+l.mood+'</span>' : '') +
+        '<span style="font-size:11px;color:'+(EC[l.energy]||'var(--text3)')+';">'+(l.energy||'—')+'</span>' +
+        '<span style="font-size:11px;color:'+(FC[l.focus]||'var(--text3)')+';">'+(l.focus||'—')+'</span>' +
+        '<span class="badge '+(l.score>=6?'badge-green':l.score>=4?'badge-amber':'badge-gray')+'">'+l.score+'/'+habits.length+'</span>' +
+      '</div></div>'
+    ).join('');
+  } else {
+    ea.innerHTML = '<div class="empty">Check in a few days to see analysis.</div>';
+  }
 
-  // log
+  // log list
   const logEl = document.getElementById('checkin-log');
   if (!logs.length) { logEl.innerHTML = '<div class="empty">No check-ins yet.</div>'; return; }
-  logEl.innerHTML = logs.slice(0, 20).map(l =>
-    `<div class="card" style="margin-bottom:8px;">
-      <div class="row-between" style="margin-bottom:8px;">
-        <span style="font-size:12px;font-family:var(--mono);color:var(--text2);">${D.fmtFull(l.date)}</span>
-        <span class="badge ${l.score>=6?'badge-green':l.score>=4?'badge-amber':'badge-gray'}">${l.score}/8</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
-        ${HABITS_DEFAULT.map(h => `<span style="font-size:10px;padding:2px 6px;border-radius:99px;background:${l.habits[h.id]?'rgba(76,175,125,0.12)':'var(--bg3)'};color:${l.habits[h.id]?'var(--green)':'var(--text3)'};">${h.name}</span>`).join('')}
-      </div>
-      ${l.win?`<div style="font-size:12px;margin-bottom:3px;"><span style="color:var(--green);font-family:var(--mono);font-size:10px;">WIN  </span>${l.win}</div>`:''}
-      ${l.loss?`<div style="font-size:12px;margin-bottom:3px;"><span style="color:var(--red);font-family:var(--mono);font-size:10px;">OFF  </span>${l.loss}</div>`:''}
-      ${l.tmrw?`<div style="font-size:12px;"><span style="color:var(--accent);font-family:var(--mono);font-size:10px;">TMR  </span>${l.tmrw}</div>`:''}
-    </div>`).join('');
+  logEl.innerHTML = logs.slice(0, 20).map(l => {
+    const habitTags = habits.map(h =>
+      '<span style="font-size:10px;padding:2px 6px;border-radius:99px;background:'+(l.habits[h.id]?'rgba(76,175,125,0.12)':'var(--bg3)')+';color:'+(l.habits[h.id]?'var(--green)':'var(--text3)')+';">'+h.name+'</span>'
+    ).join('');
+    const hasTmrw = l.goalStudy || l.goalOther || l.tmrw;
+    return '<div class="card" style="margin-bottom:8px;">' +
+      '<div class="row-between" style="margin-bottom:8px;">' +
+        '<span style="font-size:12px;font-family:var(--mono);color:var(--text2);">' + D.fmtFull(l.date) + '</span>' +
+        '<div class="row" style="gap:6px;">' +
+          (l.mood ? '<span style="font-size:11px;font-family:var(--mono);color:'+(l.mood>=8?'var(--green)':l.mood>=5?'var(--amber)':'var(--red)')+';">'+l.mood+'/10</span>' : '') +
+          '<span class="badge '+(l.score>=6?'badge-green':l.score>=4?'badge-amber':'badge-gray')+'">'+l.score+'/'+habits.length+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">' + habitTags + '</div>' +
+      (l.win ? '<div style="font-size:12px;margin-bottom:3px;"><span style="color:var(--green);font-family:var(--mono);font-size:10px;">WIN  </span>' + l.win + '</div>' : '') +
+      (l.loss ? '<div style="font-size:12px;margin-bottom:3px;"><span style="color:var(--red);font-family:var(--mono);font-size:10px;">OFF  </span>' + l.loss + '</div>' : '') +
+      (hasTmrw ? '<div style="background:var(--bg2);border-radius:var(--radius);padding:8px 10px;margin-top:6px;">' +
+        '<div style="font-size:10px;font-family:var(--mono);color:var(--accent);margin-bottom:6px;letter-spacing:1px;">TOMORROW</div>' +
+        (l.goalStudy ? '<div style="font-size:12px;margin-bottom:3px;"><span style="color:var(--accent);font-family:var(--mono);font-size:10px;">STUDY  </span>' + l.goalStudy + '</div>' : '') +
+        (l.goalOther ? '<div style="font-size:12px;margin-bottom:3px;"><span style="color:var(--purple);font-family:var(--mono);font-size:10px;">OTHER  </span>' + l.goalOther + '</div>' : '') +
+        (l.tmrw ? '<div style="font-size:12px;"><span style="color:var(--text3);font-family:var(--mono);font-size:10px;">MUST   </span>' + l.tmrw + '</div>' : '') +
+      '</div>' : '') +
+    '</div>';
+  }).join('');
 }
 
+buildMoodRow();
 buildHabitGrid();
 render();
 </script>

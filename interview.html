@@ -10,18 +10,17 @@
 <body>
 <div class="topbar"></div>
 
-<!-- ADD APPLICATION MODAL -->
 <div class="modal-bg" id="modal-app">
   <div class="modal">
     <div class="modal-title">Add application <button class="modal-close" onclick="closeModal('modal-app')">×</button></div>
     <div class="field"><label>Company</label><input type="text" id="a-company" placeholder="Company name"></div>
     <div class="field"><label>Role</label><input type="text" id="a-role" placeholder="Junior Software Developer"></div>
-    <div class="field"><label>Location</label><input type="text" id="a-location" placeholder="Mohali, Remote..."></div>
+    <div class="field"><label>Location</label><input type="text" id="a-location" placeholder="Mohali, Remote, Bangalore..."></div>
     <div class="field"><label>Status</label>
       <select id="a-status">
         <option value="applied">Applied</option>
         <option value="screening">Screening / HR call</option>
-        <option value="r1">Round 1</option>
+        <option value="r1">Round 1 — Technical</option>
         <option value="r2">Round 2</option>
         <option value="r3">Round 3+</option>
         <option value="offer">Offer received</option>
@@ -30,21 +29,47 @@
       </select>
     </div>
     <div class="field"><label>Applied date</label><input type="date" id="a-date"></div>
-    <div class="field"><label>CTC / Salary (if known)</label><input type="text" id="a-ctc" placeholder="4 LPA, 25k/month..."></div>
+    <div class="field"><label>CTC / Salary</label><input type="text" id="a-ctc" placeholder="4 LPA, 25k/month..."></div>
     <div class="field"><label>Job link</label><input type="url" id="a-link" placeholder="https://..."></div>
-    <div class="field"><label>Source</label>
+    <div class="field"><label>Source / Platform</label>
       <select id="a-source">
-        <option value="">—</option>
-        <option>LinkedIn</option><option>Naukri</option><option>Campus placement</option>
-        <option>Referral</option><option>Direct</option><option>Internshala</option>
+        <option value="">— select platform —</option>
+        <optgroup label="Job boards">
+          <option>LinkedIn</option>
+          <option>Naukri</option>
+          <option>Wellfound (AngelList)</option>
+          <option>Internshala</option>
+          <option>Glassdoor</option>
+          <option>Indeed</option>
+          <option>Shine</option>
+          <option>Monster</option>
+          <option>Foundit (Monster India)</option>
+          <option>Apna</option>
+          <option>WorkIndia</option>
+          <option>Cutshort</option>
+          <option>Instahyre</option>
+          <option>HackerEarth Jobs</option>
+          <option>HackerRank Jobs</option>
+          <option>Codeforces Jobs</option>
+        </optgroup>
+        <optgroup label="Direct / Other">
+          <option>Campus placement</option>
+          <option>Company website</option>
+          <option>Referral</option>
+          <option>Cold email</option>
+          <option>GitHub / Portfolio</option>
+          <option>Twitter / X</option>
+          <option>Discord community</option>
+          <option>Other</option>
+        </optgroup>
       </select>
     </div>
-    <div class="field"><label>Notes</label><textarea id="a-notes" rows="2" placeholder="Any important details..."></textarea></div>
+    <div class="field"><label>Stack / Tech required</label><input type="text" id="a-stack" placeholder="Node.js, React, MongoDB..."></div>
+    <div class="field"><label>Notes</label><textarea id="a-notes" rows="2" placeholder="Any important details, contacts, etc..."></textarea></div>
     <button class="btn btn-primary btn-full" onclick="saveApp()">Save application</button>
   </div>
 </div>
 
-<!-- UPDATE STATUS MODAL -->
 <div class="modal-bg" id="modal-update">
   <div class="modal">
     <div class="modal-title">Update status <button class="modal-close" onclick="closeModal('modal-update')">×</button></div>
@@ -53,7 +78,7 @@
       <select id="u-status">
         <option value="applied">Applied</option>
         <option value="screening">Screening / HR call</option>
-        <option value="r1">Round 1</option>
+        <option value="r1">Round 1 — Technical</option>
         <option value="r2">Round 2</option>
         <option value="r3">Round 3+</option>
         <option value="offer">Offer received</option>
@@ -61,14 +86,14 @@
         <option value="ghosted">Ghosted</option>
       </select>
     </div>
-    <div class="field"><label>Update notes</label><textarea id="u-notes" rows="2" placeholder="What happened in this round?"></textarea></div>
+    <div class="field"><label>Round notes</label><textarea id="u-notes" rows="3" placeholder="What happened? What was asked? How did it go?"></textarea></div>
+    <div class="field"><label>Next step / follow-up date</label><input type="date" id="u-followup"></div>
     <button class="btn btn-primary btn-full" onclick="updateStatus()">Update</button>
   </div>
 </div>
 
 <div class="page fade-in">
 
-  <!-- STATS -->
   <div class="stat-grid">
     <div class="stat-block"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total</div></div>
     <div class="stat-block"><div class="stat-val" id="s-active">0</div><div class="stat-lbl">Active</div></div>
@@ -76,29 +101,30 @@
     <div class="stat-block"><div class="stat-val" id="s-rate">0%</div><div class="stat-lbl">Progress rate</div></div>
   </div>
 
-  <!-- PIPELINE VIEW -->
   <p class="sec-label">Pipeline</p>
   <div class="card scroll-x" style="padding:12px 8px;">
-    <div style="display:flex;gap:4px;min-width:460px;" id="pipeline"></div>
+    <div style="display:flex;gap:2px;min-width:420px;" id="pipeline"></div>
   </div>
 
-  <!-- CHART -->
   <p class="sec-label">Applications over time</p>
   <div class="card"><div class="chart-wrap"><canvas id="chart-apps"></canvas></div></div>
 
-  <!-- FILTERS + ADD -->
+  <!-- Sources breakdown -->
+  <p class="sec-label">By source</p>
+  <div class="card" id="source-bars"></div>
+
   <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
     <span>All applications</span>
     <button class="btn btn-primary btn-sm" onclick="openModal('modal-app')">+ Apply</button>
   </p>
-  <div class="row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+  <div class="row" style="gap:5px;margin-bottom:10px;flex-wrap:wrap;">
     <button class="btn btn-ghost btn-sm" id="f-all" onclick="setFilter('all')">All</button>
     <button class="btn btn-ghost btn-sm" id="f-active" onclick="setFilter('active')">Active</button>
     <button class="btn btn-ghost btn-sm" id="f-offer" onclick="setFilter('offer')">Offers</button>
     <button class="btn btn-ghost btn-sm" id="f-rejected" onclick="setFilter('rejected')">Rejected</button>
+    <button class="btn btn-ghost btn-sm" id="f-ghosted" onclick="setFilter('ghosted')">Ghosted</button>
   </div>
   <div id="app-list" style="padding-bottom:32px;"></div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -107,105 +133,97 @@
 initDrawer('interview.html');
 initTopbar('Interviews');
 
-let appFilter = 'all';
-let appChart = null;
+let appFilter='all', appChart=null;
 
-const STATUS_META = {
-  applied:   { label: 'Applied',    badge: 'badge-gray',   stage: 0 },
-  screening: { label: 'Screening',  badge: 'badge-accent', stage: 1 },
-  r1:        { label: 'Round 1',    badge: 'badge-accent', stage: 2 },
-  r2:        { label: 'Round 2',    badge: 'badge-amber',  stage: 3 },
-  r3:        { label: 'Round 3+',   badge: 'badge-amber',  stage: 4 },
-  offer:     { label: 'Offer',      badge: 'badge-green',  stage: 5 },
-  rejected:  { label: 'Rejected',   badge: 'badge-red',    stage: -1 },
-  ghosted:   { label: 'Ghosted',    badge: 'badge-gray',   stage: -1 },
+const STATUS_META={
+  applied:   {label:'Applied',   badge:'badge-gray',   stage:0},
+  screening: {label:'Screening', badge:'badge-accent',  stage:1},
+  r1:        {label:'Round 1',   badge:'badge-accent',  stage:2},
+  r2:        {label:'Round 2',   badge:'badge-amber',   stage:3},
+  r3:        {label:'Round 3+',  badge:'badge-amber',   stage:4},
+  offer:     {label:'Offer',     badge:'badge-green',   stage:5},
+  rejected:  {label:'Rejected',  badge:'badge-red',     stage:-1},
+  ghosted:   {label:'Ghosted',   badge:'badge-gray',    stage:-1},
 };
+const PIPELINE_STAGES=['applied','screening','r1','r2','r3','offer'];
 
-const PIPELINE_STAGES = ['applied','screening','r1','r2','r3','offer'];
+function getApps(){return DB.get(DB.keys.interview,[]);}
 
-function getApps() { return DB.get(DB.keys.interview, []); }
-
-function saveApp() {
-  const company = document.getElementById('a-company').value.trim();
-  if (!company) { toast('Enter company name'); return; }
-  const apps = getApps();
+function saveApp(){
+  const company=document.getElementById('a-company').value.trim();
+  if(!company){toast('Enter company name');return;}
+  const apps=getApps();
   apps.unshift({
-    id: Date.now(),
-    company,
-    role: document.getElementById('a-role').value.trim(),
-    location: document.getElementById('a-location').value.trim(),
-    status: document.getElementById('a-status').value,
-    date: document.getElementById('a-date').value || D.today(),
-    ctc: document.getElementById('a-ctc').value.trim(),
-    link: document.getElementById('a-link').value.trim(),
-    source: document.getElementById('a-source').value,
-    notes: document.getElementById('a-notes').value.trim(),
-    history: [{ status: document.getElementById('a-status').value, date: D.today(), note: '' }],
+    id:Date.now(),company,
+    role:document.getElementById('a-role').value.trim(),
+    location:document.getElementById('a-location').value.trim(),
+    status:document.getElementById('a-status').value,
+    date:document.getElementById('a-date').value||D.today(),
+    ctc:document.getElementById('a-ctc').value.trim(),
+    link:document.getElementById('a-link').value.trim(),
+    source:document.getElementById('a-source').value,
+    stack:document.getElementById('a-stack').value.trim(),
+    notes:document.getElementById('a-notes').value.trim(),
+    history:[{status:document.getElementById('a-status').value,date:D.today(),note:''}],
   });
-  DB.set(DB.keys.interview, apps);
+  DB.set(DB.keys.interview,apps);
   closeModal('modal-app');
-  ['a-company','a-role','a-location','a-ctc','a-link','a-notes'].forEach(id => document.getElementById(id).value = '');
+  ['a-company','a-role','a-location','a-ctc','a-link','a-stack','a-notes'].forEach(id=>document.getElementById(id).value='');
   toast('Application saved'); render();
 }
 
-function openUpdate(id) {
-  const app = getApps().find(a => a.id === id);
-  if (!app) return;
-  document.getElementById('u-id').value = id;
-  document.getElementById('u-status').value = app.status;
-  document.getElementById('u-notes').value = '';
+function openUpdate(id){
+  const app=getApps().find(a=>a.id===id);if(!app)return;
+  document.getElementById('u-id').value=id;
+  document.getElementById('u-status').value=app.status;
+  document.getElementById('u-notes').value='';
+  document.getElementById('u-followup').value='';
   openModal('modal-update');
 }
 
-function updateStatus() {
-  const id = parseInt(document.getElementById('u-id').value);
-  const newStatus = document.getElementById('u-status').value;
-  const note = document.getElementById('u-notes').value.trim();
-  const apps = getApps();
-  const app = apps.find(a => a.id === id);
-  if (!app) return;
-  app.status = newStatus;
-  if (!app.history) app.history = [];
-  app.history.push({ status: newStatus, date: D.today(), note });
-  DB.set(DB.keys.interview, apps);
+function updateStatus(){
+  const id=parseInt(document.getElementById('u-id').value);
+  const newStatus=document.getElementById('u-status').value;
+  const note=document.getElementById('u-notes').value.trim();
+  const followup=document.getElementById('u-followup').value;
+  const apps=getApps();
+  const app=apps.find(a=>a.id===id);if(!app)return;
+  app.status=newStatus;
+  if(!app.history)app.history=[];
+  app.history.push({status:newStatus,date:D.today(),note,followup});
+  DB.set(DB.keys.interview,apps);
   closeModal('modal-update');
   toast('Status updated'); render();
 }
 
-function deleteApp(id) {
-  if (!confirm('Delete this application?')) return;
-  DB.set(DB.keys.interview, getApps().filter(a => a.id !== id));
-  render();
-}
+function deleteApp(id){if(!confirm('Delete this application?'))return;DB.set(DB.keys.interview,getApps().filter(a=>a.id!==id));render();}
 
-function setFilter(f) {
-  appFilter = f;
-  ['all','active','offer','rejected'].forEach(x => {
-    document.getElementById('f-'+x).classList.toggle('btn-primary', x === f);
-    document.getElementById('f-'+x).classList.toggle('btn-ghost', x !== f);
+function setFilter(f){
+  appFilter=f;
+  ['all','active','offer','rejected','ghosted'].forEach(x=>{
+    document.getElementById('f-'+x).classList.toggle('btn-primary',x===f);
+    document.getElementById('f-'+x).classList.toggle('btn-ghost',x!==f);
   });
   renderList();
 }
 
-function render() {
-  const apps = getApps();
-  const active = apps.filter(a => !['offer','rejected','ghosted'].includes(a.status));
-  const offers = apps.filter(a => a.status === 'offer');
-  const progressed = apps.filter(a => STATUS_META[a.status]?.stage > 0);
-  const rate = apps.length ? Math.round(progressed.length / apps.length * 100) : 0;
+function render(){
+  const apps=getApps();
+  const active=apps.filter(a=>!['offer','rejected','ghosted'].includes(a.status));
+  const offers=apps.filter(a=>a.status==='offer');
+  const progressed=apps.filter(a=>(STATUS_META[a.status]?.stage||0)>0);
+  const rate=apps.length?Math.round(progressed.length/apps.length*100):0;
 
-  document.getElementById('s-total').textContent = apps.length;
-  document.getElementById('s-active').textContent = active.length;
-  document.getElementById('s-offer').textContent = offers.length;
-  document.getElementById('s-rate').textContent = rate + '%';
+  document.getElementById('s-total').textContent=apps.length;
+  document.getElementById('s-active').textContent=active.length;
+  document.getElementById('s-offer').textContent=offers.length;
+  document.getElementById('s-rate').textContent=rate+'%';
 
   // pipeline
-  const pipelineEl = document.getElementById('pipeline');
-  const stageCounts = {};
-  PIPELINE_STAGES.forEach(s => { stageCounts[s] = apps.filter(a => a.status === s).length; });
-  pipelineEl.innerHTML = PIPELINE_STAGES.map((s, i) => {
-    const count = stageCounts[s];
-    const sm = STATUS_META[s];
+  const stageCounts={};
+  PIPELINE_STAGES.forEach(s=>{stageCounts[s]=apps.filter(a=>a.status===s).length;});
+  document.getElementById('pipeline').innerHTML=PIPELINE_STAGES.map((s,i)=>{
+    const count=stageCounts[s],sm=STATUS_META[s];
     return `<div style="flex:1;text-align:center;padding:10px 4px;border-right:${i<5?'1px solid var(--border)':'none'};">
       <div style="font-size:20px;font-weight:700;color:${count>0?'var(--accent)':'var(--text3)'};">${count}</div>
       <div style="font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:3px;">${sm.label.toUpperCase()}</div>
@@ -213,59 +231,63 @@ function render() {
   }).join('');
 
   // chart
-  const last30 = Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(29-i));return d.toISOString().slice(0,10);});
-  const dateCount = {};
-  apps.forEach(a => { if (a.date) dateCount[a.date] = (dateCount[a.date]||0)+1; });
-  if (appChart) appChart.destroy();
-  appChart = sparkBar(document.getElementById('chart-apps').getContext('2d'),
+  const last30=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(29-i));return d.toISOString().slice(0,10);});
+  const dateCount={};apps.forEach(a=>{if(a.date)dateCount[a.date]=(dateCount[a.date]||0)+1;});
+  if(appChart)appChart.destroy();
+  appChart=sparkBar(document.getElementById('chart-apps').getContext('2d'),
     last30.filter((_,i)=>i%3===0).map(d=>D.fmt(d)),
-    last30.filter((_,i)=>i%3===0).map(d=>dateCount[d]||0),
-    '#9c7cfc');
+    last30.filter((_,i)=>i%3===0).map(d=>dateCount[d]||0),'#9c7cfc');
+
+  // source bars
+  const srcCounts={};apps.forEach(a=>{if(a.source)srcCounts[a.source]=(srcCounts[a.source]||0)+1;});
+  const srcSorted=Object.entries(srcCounts).sort((a,b)=>b[1]-a[1]);
+  const maxS=srcSorted[0]?.[1]||1;
+  document.getElementById('source-bars').innerHTML=srcSorted.length?srcSorted.map(([src,count])=>
+    `<div class="row-between" style="padding:5px 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:12px;flex:1;margin-right:8px;">${src}</div>
+      <div style="width:80px;margin:0 8px;"><div class="prog-track"><div class="prog-fill" style="width:${Math.round(count/maxS*100)}%;background:var(--purple);"></div></div></div>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);width:16px;text-align:right;">${count}</div>
+    </div>`).join(''):'<div class="empty">No applications yet.</div>';
 
   renderList();
 }
 
-function renderList() {
-  const apps = getApps();
-  const filtered = appFilter === 'all' ? apps
-    : appFilter === 'active' ? apps.filter(a => !['offer','rejected','ghosted'].includes(a.status))
-    : apps.filter(a => a.status === appFilter);
-
-  const el = document.getElementById('app-list');
-  if (!filtered.length) { el.innerHTML = '<div class="empty">No applications here.</div>'; return; }
-  el.innerHTML = filtered.map(a => {
-    const sm = STATUS_META[a.status] || STATUS_META.applied;
-    const hist = (a.history||[]).slice(-3).reverse();
+function renderList(){
+  const apps=getApps();
+  const filtered=appFilter==='all'?apps:appFilter==='active'?apps.filter(a=>!['offer','rejected','ghosted'].includes(a.status)):apps.filter(a=>a.status===appFilter);
+  const el=document.getElementById('app-list');
+  if(!filtered.length){el.innerHTML='<div class="empty">No applications here.</div>';return;}
+  el.innerHTML=filtered.map(a=>{
+    const sm=STATUS_META[a.status]||STATUS_META.applied;
+    const hist=(a.history||[]).slice(-3).reverse();
     return `<div class="card" style="margin-bottom:8px;">
       <div class="row-between" style="margin-bottom:6px;">
         <div>
           <div style="font-weight:600;font-size:15px;">${a.company}</div>
-          ${a.role ? `<div style="font-size:12px;color:var(--text2);">${a.role}</div>` : ''}
+          ${a.role?`<div style="font-size:12px;color:var(--text2);">${a.role}</div>`:''}
         </div>
         <span class="badge ${sm.badge}">${sm.label}</span>
       </div>
-      <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-        ${a.location ? `<span class="badge badge-gray">${a.location}</span>` : ''}
-        ${a.source ? `<span class="badge badge-gray">${a.source}</span>` : ''}
-        ${a.ctc ? `<span class="badge badge-green">${a.ctc}</span>` : ''}
+      <div class="row" style="gap:5px;flex-wrap:wrap;margin-bottom:8px;">
+        ${a.location?`<span class="badge badge-gray">${a.location}</span>`:''}
+        ${a.source?`<span class="badge badge-purple">${a.source}</span>`:''}
+        ${a.ctc?`<span class="badge badge-green">${a.ctc}</span>`:''}
+        ${a.stack?`<span class="badge badge-gray">${a.stack}</span>`:''}
         <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${D.fmt(a.date)}</span>
       </div>
-      ${a.notes ? `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${a.notes}</div>` : ''}
-      ${hist.length > 1 ? `<div style="margin-bottom:8px;">
-        ${hist.map(h => `<div style="font-size:11px;font-family:var(--mono);color:var(--text3);padding:2px 0;">${D.fmt(h.date)} → ${h.status}${h.note?' · '+h.note:''}</div>`).join('')}
-      </div>` : ''}
+      ${a.notes?`<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${a.notes}</div>`:''}
+      ${hist.length>1?`<div style="margin-bottom:8px;background:var(--bg2);padding:6px 8px;border-radius:var(--radius);">${hist.map(h=>`<div style="font-size:11px;font-family:var(--mono);color:var(--text3);padding:2px 0;">${D.fmt(h.date)} → ${h.status}${h.note?' · '+h.note:''}${h.followup?' · follow '+D.fmt(h.followup):''}</div>`).join('')}</div>`:''}
       <div class="row" style="gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="openUpdate(${a.id})">Update status</button>
-        ${a.link ? `<a href="${a.link}" target="_blank" class="btn btn-ghost btn-sm">JD ↗</a>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openUpdate(${a.id})">Update</button>
+        ${a.link?`<a href="${a.link}" target="_blank" class="btn btn-ghost btn-sm">JD ↗</a>`:''}
         <button class="btn btn-danger btn-sm" onclick="deleteApp(${a.id})" style="margin-left:auto;">Delete</button>
       </div>
     </div>`;
   }).join('');
 }
 
-render();
-setFilter('all');
-document.getElementById('a-date').value = D.today();
+render();setFilter('all');
+document.getElementById('a-date').value=D.today();
 </script>
 </body>
 </html>

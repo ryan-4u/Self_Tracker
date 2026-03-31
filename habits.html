@@ -6,49 +6,96 @@
 <meta name="theme-color" content="#0a0a0a">
 <title>Habits · Aaryan OS</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.tmpl-modal { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:flex-end;justify-content:center; }
+.tmpl-modal.open { display:flex; }
+.tmpl-sheet { background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:20px 16px 36px;width:100%;max-width:480px;max-height:82vh;overflow-y:auto; }
+.eye-dot { width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .15s;flex-shrink:0; }
+.eye-dot.done { background:rgba(79,195,247,0.15);border-color:var(--accent);color:var(--accent); }
+.water-add { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px; }
+.water-btn { padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);transition:all .15s; }
+.water-btn:hover { border-color:var(--accent);color:var(--accent); }
+.spiral-box { width:100%;aspect-ratio:1/1;max-width:240px;margin:0 auto;display:block; }
+</style>
 </head>
 <body>
 <div class="topbar"></div>
+
+<div class="modal-bg" id="modal-add-habit">
+  <div class="modal">
+    <div class="modal-title">New habit <button class="modal-close" onclick="closeModal('modal-add-habit')">×</button></div>
+    <div class="field"><label>Habit name</label><input type="text" id="nh-name" placeholder="e.g. Read 20 pages"></div>
+    <div class="field"><label>Category</label>
+      <select id="nh-cat">
+        <option value="body">Body</option>
+        <option value="skill">Skill</option>
+        <option value="discipline">Discipline</option>
+        <option value="mind">Mind</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addHabit()">Add habit</button>
+  </div>
+</div>
+
+<div class="tmpl-modal" id="tmpl-modal">
+  <div class="tmpl-sheet" id="tmpl-content"></div>
+</div>
+
+<div class="modal-bg" id="modal-deleted">
+  <div class="modal">
+    <div class="modal-title">Deleted habits <button class="modal-close" onclick="closeModal('modal-deleted')">×</button></div>
+    <div id="deleted-list"></div>
+  </div>
+</div>
+
 <div class="page fade-in">
 
-  <!-- STATS -->
-  <p class="sec-label">This week</p>
-  <div class="stat-grid stat-grid-4">
+  <p class="sec-label">Phase spiral — habit completion</p>
+  <div class="card" style="display:flex;align-items:center;justify-content:center;padding:16px;">
+    <canvas id="spiral-habits" class="spiral-box"></canvas>
+  </div>
+
+  <div class="stat-grid stat-grid-4" style="margin-bottom:0;">
     <div class="stat-block"><div class="stat-val" id="s-today">0</div><div class="stat-lbl">Today</div></div>
     <div class="stat-block"><div class="stat-val" id="s-week">0%</div><div class="stat-lbl">Week</div></div>
     <div class="stat-block"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Streak</div></div>
-    <div class="stat-block"><div class="stat-val" id="s-days">0</div><div class="stat-lbl">Days</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-days">0</div><div class="stat-lbl">Days logged</div></div>
   </div>
 
-  <!-- WEEK GRID -->
   <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Today's habits</span>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="showDeleted()">History</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-habit')">+ Habit</button>
+    </div>
+  </p>
+  <div id="today-habits"></div>
+
+  <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;">
     <span>Weekly grid</span>
-    <span style="display:flex;gap:6px;">
-      <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="shiftWeek(-1)">&#8592;</button>
-      <span style="font-size:11px;color:var(--text2);font-family:var(--mono);line-height:28px;" id="week-range"></span>
+    <span style="display:flex;gap:6px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="shiftWeek(-1)">&#8592;</button>
+      <span style="font-size:11px;color:var(--text2);font-family:var(--mono);" id="week-range"></span>
       <button class="btn btn-ghost btn-sm" id="btn-next" onclick="shiftWeek(1)">&#8594;</button>
     </span>
   </p>
   <div class="card" style="padding:12px 8px;">
     <div class="scroll-x">
-      <table style="width:100%;border-collapse:collapse;min-width:340px;">
+      <table style="width:100%;border-collapse:collapse;min-width:320px;">
         <thead id="grid-head"></thead>
         <tbody id="grid-body"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- 4-WEEK TREND -->
   <p class="sec-label">4-week trend</p>
   <div class="card"><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
 
-  <!-- PER-HABIT BARS -->
-  <p class="sec-label">Weekly completion per habit</p>
+  <p class="sec-label">This week — per habit</p>
   <div class="card" id="habit-bars"></div>
 
-  <!-- BEST STREAKS -->
-  <p class="sec-label">Best streaks</p>
-  <div class="card" id="streak-list" style="padding-bottom:4px;"></div>
+  <p class="sec-label">Streaks</p>
+  <div class="card" id="streak-list"></div>
 
   <div style="padding-bottom:32px;"></div>
 </div>
@@ -61,146 +108,427 @@ initTopbar('Habits');
 
 const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 let weekOffset = 0;
-let data = DB.get(DB.keys.habits, {});
+let trendChart = null;
 
-function save() { DB.set(DB.keys.habits, data); }
+function getData()     { return DB.get(DB.keys.habits, {}); }
+function saveData(d)   { DB.set(DB.keys.habits, d); }
+function getDetail()   { return DB.get(DB.keys.habitDetail, {}); }
+function saveDetail(d) { DB.set(DB.keys.habitDetail, d); }
 
-function toggle(hid, dateKey) {
-  if (D.isFuture(dateKey)) return;
-  if (!data[dateKey]) data[dateKey] = {};
-  data[dateKey][hid] = !data[dateKey][hid];
-  save(); render();
-}
+// ── STREAK CACHE — computed once per render, not per-habit per-section ──
+// Maps hid -> { cur, best }
+function buildStreakCache(habits, data) {
+  const today = D.today();
+  const cache = {};
 
-function getStreak(hid) {
-  let streak = 0;
-  const d = new Date(); d.setHours(0,0,0,0);
-  while (true) {
-    const k = d.toISOString().slice(0,10);
-    if (data[k] && data[k][hid]) { streak++; d.setDate(d.getDate()-1); }
-    else break;
-    if (streak > 365) break;
-  }
-  return streak;
-}
+  habits.forEach(h => {
+    // Current streak: walk backwards from today
+    let cur = 0;
+    const dt = new Date(today + 'T00:00:00');
+    for (let i = 0; i < 365; i++) {
+      const k = dt.toISOString().slice(0, 10);
+      if (data[k] && data[k][h.id]) { cur++; dt.setDate(dt.getDate() - 1); }
+      else break;
+    }
 
-function getBestStreak(hid) {
-  const keys = Object.keys(data).sort();
-  let best = 0, cur = 0, prev = null;
-  keys.forEach(k => {
-    if (data[k] && data[k][hid]) {
-      if (prev) {
-        const diff = (new Date(k) - new Date(prev)) / 86400000;
-        cur = diff === 1 ? cur + 1 : 1;
-      } else cur = 1;
-      if (cur > best) best = cur;
-      prev = k;
-    } else { cur = 0; prev = null; }
+    // Best streak: single pass over sorted keys
+    const keys = Object.keys(data).sort();
+    let best = 0, run = 0, prev = null;
+    for (const k of keys) {
+      if (data[k] && data[k][h.id]) {
+        if (prev) {
+          // compare as YYYYMMDD integers — no Date objects needed
+          const py = parseInt(prev.replace(/-/g,'')), cy = parseInt(k.replace(/-/g,''));
+          const pd = new Date(prev + 'T00:00:00'), cd = new Date(k + 'T00:00:00');
+          const diff = (cd - pd) / 86400000;
+          run = diff === 1 ? run + 1 : 1;
+        } else run = 1;
+        if (run > best) best = run;
+        prev = k;
+      } else { run = 0; prev = null; }
+    }
+    cache[h.id] = { cur, best };
   });
-  return best;
+
+  return cache;
 }
 
-function shiftWeek(dir) {
-  weekOffset += dir;
-  if (weekOffset > 0) weekOffset = 0;
+// ── HABIT MANAGEMENT ──
+function addHabit() {
+  const name = document.getElementById('nh-name').value.trim();
+  if (!name) { toast('Enter a habit name'); return; }
+  const habits = getHabits();
+  habits.push({ id: 'custom_' + Date.now(), name, cat: document.getElementById('nh-cat').value, template: null });
+  DB.set(DB.keys.habitDefs, habits);
+  document.getElementById('nh-name').value = '';
+  closeModal('modal-add-habit');
+  toast('Habit added');
   render();
 }
 
-let trendChart = null;
+function deleteHabit(id) {
+  if (!confirm('Delete this habit? It moves to history.')) return;
+  const habits = getHabits();
+  const h = habits.find(x => x.id === id);
+  if (!h) return;
+  h.deleted = true; h.deletedDate = D.today();
+  DB.set(DB.keys.habitDefs, habits);
+  toast('Moved to history'); render();
+}
 
+function restoreHabit(id) {
+  const habits = getHabits();
+  const h = habits.find(x => x.id === id);
+  if (!h) return;
+  delete h.deleted; delete h.deletedDate;
+  DB.set(DB.keys.habitDefs, habits);
+  toast('Habit restored'); showDeleted(); render();
+}
+
+function showDeleted() {
+  const deleted = getHabits().filter(h => h.deleted);
+  document.getElementById('deleted-list').innerHTML = deleted.length
+    ? deleted.map(h =>
+        '<div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--border);">' +
+        '<div><div style="font-size:13px;">' + h.name + '</div>' +
+        '<div style="font-size:10px;color:var(--text3);font-family:var(--mono);">Deleted ' + D.fmt(h.deletedDate) + '</div></div>' +
+        '<button class="btn btn-ghost btn-sm" onclick="restoreHabit(\'' + h.id + '\')">Restore</button></div>'
+      ).join('')
+    : '<div class="empty">No deleted habits.</div>';
+  openModal('modal-deleted');
+}
+
+// ── TOGGLE ──
+function toggle(hid, dateKey) {
+  if (D.isFuture(dateKey)) return;
+  const d = getData();
+  if (!d[dateKey]) d[dateKey] = {};
+  d[dateKey][hid] = !d[dateKey][hid];
+  saveData(d); render();
+}
+
+// ── TEMPLATES ──
+function openTemplate(hid) {
+  const habit = getActiveHabits().find(h => h.id === hid);
+  if (!habit) return;
+  const detail = getDetail();
+  const today  = D.today();
+  const saved  = detail[hid + '_' + today] || {};
+
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+    '<div style="font-size:15px;font-weight:600;">' + habit.name + '</div>' +
+    '<button onclick="document.getElementById(\'tmpl-modal\').classList.remove(\'open\')" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;">×</button></div>';
+
+  if (habit.template === 'water') {
+    const target  = saved.target || 4000;
+    const entries = saved.entries || [];
+    const total   = entries.reduce((a,e) => a+e, 0);
+    const pct     = Math.min(Math.round(total/target*100), 100);
+    html +=
+      '<div style="text-align:center;margin-bottom:16px;">' +
+        '<div style="font-size:32px;font-weight:700;color:var(--accent);">' + (total/1000).toFixed(1) + 'L</div>' +
+        '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);">of ' + (target/1000).toFixed(1) + 'L target</div>' +
+        '<div class="prog-track" style="margin:10px 0;"><div class="prog-fill" style="width:' + pct + '%;background:var(--accent);"></div></div>' +
+      '</div>' +
+      '<div class="water-add">' +
+        [150,200,250,300,500,750,1000].map(ml =>
+          '<button class="water-btn" onclick="addWater(' + ml + ',\'' + hid + '\')">' + (ml>=1000?(ml/1000)+'L':'+'+ml+'ml') + '</button>'
+        ).join('') +
+      '</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:14px;">' +
+        '<input type="number" id="w-custom" placeholder="Custom ml" style="flex:1;">' +
+        '<button class="btn btn-ghost btn-sm" onclick="addWaterCustom(\'' + hid + '\')">Add</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">Target</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:14px;">' +
+        [3000,4000,4500,5000].map(t =>
+          '<button class="btn btn-ghost btn-sm" style="' + (target===t?'border-color:var(--accent);color:var(--accent);':'') + '" onclick="setWaterTarget(' + t + ',\'' + hid + '\')">' + (t/1000) + 'L</button>'
+        ).join('') +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">Log</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:4px;">' +
+        entries.map((e,i) =>
+          '<span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:99px;color:var(--text2);">' + e + 'ml ' +
+          '<span onclick="removeWater(' + i + ',\'' + hid + '\')" style="cursor:pointer;color:var(--text3);">×</span></span>'
+        ).join('') +
+      '</div>';
+
+  } else if (habit.template === 'eyes') {
+    const times = saved.times || [];
+    html +=
+      '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px;">Tap each time you do eye drops</div>' +
+      '<div style="display:flex;gap:16px;justify-content:center;margin-bottom:14px;">' +
+        [1,2,3].map(i =>
+          '<div style="text-align:center;">' +
+            '<div class="eye-dot ' + (times.includes(i)?'done':'') + '" onclick="toggleEye(' + i + ',\'' + hid + '\')">' + (times.includes(i)?'✓':'') + '</div>' +
+            '<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;">#' + i + '</div>' +
+          '</div>'
+        ).join('') +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text2);text-align:center;">' + times.length + '/3 done today</div>';
+
+  } else if (habit.template === 'physical') {
+    html +=
+      '<div class="field"><label>Today\'s target</label><input type="text" id="ph-target" value="' + (saved.target||'') + '" placeholder="e.g. 30 min walk + 20 push-ups"></div>' +
+      '<div class="field"><label>What I actually did</label><textarea id="ph-did" rows="3" placeholder="Walked 25 min, 3 sets push-ups...">' + (saved.did||'') + '</textarea></div>' +
+      '<div class="field"><label>Duration (minutes)</label><input type="number" id="ph-dur" value="' + (saved.duration||'') + '" placeholder="45"></div>' +
+      '<button class="btn btn-primary btn-full" onclick="savePhysical(\'' + hid + '\')">Save</button>';
+
+  } else if (habit.template === 'learn') {
+    html +=
+      '<div class="field"><label>What I studied / learned</label><textarea id="ln-what" rows="3" placeholder="React hooks — useEffect cleanup...">' + (saved.what||'') + '</textarea></div>' +
+      '<div class="field"><label>Resource used</label><input type="text" id="ln-src" value="' + (saved.source||'') + '" placeholder="YouTube, docs, course, book..."></div>' +
+      '<div class="field"><label>Duration (minutes)</label><input type="number" id="ln-dur" value="' + (saved.duration||'') + '" placeholder="60"></div>' +
+      '<div class="field"><label>Key takeaway</label><input type="text" id="ln-key" value="' + (saved.key||'') + '" placeholder="One thing I\'ll remember..."></div>' +
+      '<button class="btn btn-primary btn-full" onclick="saveLearning(\'' + hid + '\')">Save</button>';
+
+  } else {
+    html += '<div style="text-align:center;padding:24px 0;color:var(--text3);font-family:var(--mono);font-size:13px;">No template for this habit.<br>Just tap the checkbox to mark done.</div>';
+  }
+
+  document.getElementById('tmpl-content').innerHTML = html;
+  document.getElementById('tmpl-modal').classList.add('open');
+}
+
+document.getElementById('tmpl-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// ── WATER ──
+function getWaterDetail(hid) {
+  const d = getDetail(); return d[hid+'_'+D.today()] || { entries:[], target:4000 };
+}
+function saveWaterDetail(hid, v) {
+  const d = getDetail(); d[hid+'_'+D.today()] = v; saveDetail(d);
+}
+function addWater(ml, hid) {
+  const v = getWaterDetail(hid);
+  v.entries = [...(v.entries||[]), ml];
+  saveWaterDetail(hid, v);
+  if (v.entries.reduce((a,e)=>a+e,0) >= (v.target||4000)) {
+    const dat = getData(); const t = D.today();
+    if (!dat[t]) dat[t] = {};
+    dat[t][hid] = true; saveData(dat);
+  }
+  openTemplate(hid); renderHabitList();
+}
+function addWaterCustom(hid) {
+  const ml = parseInt(document.getElementById('w-custom').value);
+  if (ml > 0) addWater(ml, hid);
+}
+function removeWater(idx, hid) {
+  const v = getWaterDetail(hid); v.entries.splice(idx, 1);
+  saveWaterDetail(hid, v); openTemplate(hid); renderHabitList();
+}
+function setWaterTarget(t, hid) {
+  const v = getWaterDetail(hid); v.target = t;
+  saveWaterDetail(hid, v); openTemplate(hid);
+}
+
+// ── EYE DROPS ──
+function toggleEye(n, hid) {
+  const d = getDetail(); const k = hid+'_'+D.today();
+  if (!d[k]) d[k] = { times:[] };
+  const idx = d[k].times.indexOf(n);
+  if (idx >= 0) d[k].times.splice(idx,1); else d[k].times.push(n);
+  if (d[k].times.length >= 2) {
+    const dat = getData(); const t = D.today();
+    if (!dat[t]) dat[t] = {};
+    dat[t][hid] = true; saveData(dat);
+  }
+  saveDetail(d); openTemplate(hid); renderHabitList();
+}
+
+// ── PHYSICAL ──
+function savePhysical(hid) {
+  const d = getDetail(); const k = hid+'_'+D.today();
+  d[k] = { target:document.getElementById('ph-target').value, did:document.getElementById('ph-did').value, duration:document.getElementById('ph-dur').value };
+  saveDetail(d);
+  if (d[k].did) { const dat=getData(); const t=D.today(); if(!dat[t])dat[t]={}; dat[t][hid]=true; saveData(dat); }
+  document.getElementById('tmpl-modal').classList.remove('open');
+  toast('Physical log saved'); renderHabitList();
+}
+
+// ── LEARNING ──
+function saveLearning(hid) {
+  const d = getDetail(); const k = hid+'_'+D.today();
+  d[k] = { what:document.getElementById('ln-what').value, source:document.getElementById('ln-src').value, duration:document.getElementById('ln-dur').value, key:document.getElementById('ln-key').value };
+  saveDetail(d);
+  if (d[k].what) { const dat=getData(); const t=D.today(); if(!dat[t])dat[t]={}; dat[t][hid]=true; saveData(dat); }
+  document.getElementById('tmpl-modal').classList.remove('open');
+  toast('Learning log saved'); renderHabitList();
+}
+
+// ── WEEK NAV ──
+function shiftWeek(dir) { weekOffset += dir; if (weekOffset > 0) weekOffset = 0; render(); }
+
+// ── RENDER HABIT LIST (lightweight — no streak calc, no chart) ──
+function renderHabitList() {
+  const data   = getData();
+  const today  = D.today();
+  const habits = getActiveHabits();
+  const detail = getDetail();
+
+  document.getElementById('today-habits').innerHTML = habits.map(h => {
+    const done        = !!(data[today] && data[today][h.id]);
+    const hasTemplate = !!h.template;
+    let sub = '';
+    const dk = h.id + '_' + today;
+    if (h.template === 'water') {
+      const v = detail[dk] || {entries:[],target:4000};
+      const total = v.entries.reduce((a,e)=>a+e, 0);
+      sub = (total/1000).toFixed(1) + 'L / ' + ((v.target||4000)/1000).toFixed(1) + 'L';
+    } else if (h.template === 'eyes') {
+      const v = detail[dk] || {times:[]};
+      sub = (v.times||[]).length + '/3 done';
+    } else if (h.template === 'physical') {
+      const v = detail[dk] || {};
+      sub = v.did ? v.did.slice(0,32) + (v.did.length>32?'…':'') : '';
+    } else if (h.template === 'learn') {
+      const v = detail[dk] || {};
+      sub = v.what ? v.what.slice(0,32) + (v.what.length>32?'…':'') : '';
+    }
+
+    return (
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;' +
+      'background:' + (done?'rgba(76,175,125,0.08)':'var(--bg1)') + ';' +
+      'border:1px solid ' + (done?'var(--green)':'var(--border)') + ';' +
+      'border-radius:var(--radius);margin-bottom:6px;">' +
+        '<div onclick="toggle(\'' + h.id + '\',\'' + today + '\')" style="width:22px;height:22px;border-radius:5px;' +
+        'border:1px solid ' + (done?'var(--green)':'var(--border2)') + ';' +
+        'background:' + (done?'var(--green)':'transparent') + ';' +
+        'display:flex;align-items:center;justify-content:center;font-size:12px;' +
+        'color:' + (done?'#000':'transparent') + ';cursor:pointer;flex-shrink:0;transition:all .15s;">✓</div>' +
+        '<div style="flex:1;cursor:' + (hasTemplate?'pointer':'default') + ';" ' +
+        (hasTemplate?'onclick="openTemplate(\'' + h.id + '\')"':'') + '>' +
+          '<div style="font-size:13px;font-weight:500;color:' + (done?'var(--green)':'var(--text)') + ';">' +
+            h.name + (hasTemplate?' <span style="font-size:10px;color:var(--text3);font-family:var(--mono);">· tap for detail</span>':'') +
+          '</div>' +
+          (sub?'<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px;">' + sub + '</div>':'') +
+        '</div>' +
+        '<button onclick="deleteHabit(\'' + h.id + '\')" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px;line-height:1;">×</button>' +
+      '</div>'
+    );
+  }).join('') || '<div class="empty">No habits. Add one above.</div>';
+
+  const doneCnt = habits.filter(h => data[today] && data[today][h.id]).length;
+  document.getElementById('s-today').textContent = doneCnt + '/' + habits.length;
+}
+
+// ── FULL RENDER ──
 function render() {
-  data = DB.get(DB.keys.habits, {});
-  const today = D.today();
-  const week = D.weekDates(weekOffset);
+  const data   = getData();
+  const today  = D.today();
+  const habits = getActiveHabits();
 
-  // week range label
-  const fmt = iso => D.fmt(iso);
-  document.getElementById('week-range').textContent = fmt(week[0]) + '–' + fmt(week[6]);
+  // Compute streaks ONCE for all habits — single pass, reused everywhere below
+  const streaks = buildStreakCache(habits, data);
+
+  renderHabitList();
+
+  // Week stats
+  const week     = D.weekDates(weekOffset);
+  const pastDays = week.filter(d => d <= today);
+  document.getElementById('week-range').textContent = D.fmt(week[0]) + '–' + D.fmt(week[6]);
   document.getElementById('btn-next').disabled = weekOffset >= 0;
 
-  // stats
-  const todayData = data[today] || {};
-  const todayDone = HABITS_DEFAULT.filter(h => todayData[h.id]).length;
-  document.getElementById('s-today').textContent = todayDone + '/' + HABITS_DEFAULT.length;
+  let wDone = 0;
+  pastDays.forEach(d => habits.forEach(h => { if (data[d] && data[d][h.id]) wDone++; }));
+  const wPoss = pastDays.length * habits.length;
+  document.getElementById('s-week').textContent = wPoss ? Math.round(wDone/wPoss*100) + '%' : '0%';
 
-  const pastDays = week.filter(d => d <= today);
-  let weekDone = 0, weekPossible = pastDays.length * HABITS_DEFAULT.length;
-  pastDays.forEach(d => { HABITS_DEFAULT.forEach(h => { if (data[d] && data[d][h.id]) weekDone++; }); });
-  document.getElementById('s-week').textContent = weekPossible ? Math.round(weekDone / weekPossible * 100) + '%' : '0%';
-
-  let maxStreak = 0;
-  HABITS_DEFAULT.forEach(h => { const s = getStreak(h.id); if (s > maxStreak) maxStreak = s; });
+  const maxStreak = habits.reduce((m,h) => Math.max(m, streaks[h.id]?.cur||0), 0);
   document.getElementById('s-streak').textContent = maxStreak;
-  document.getElementById('s-days').textContent = Object.keys(data).length;
+  document.getElementById('s-days').textContent   = Object.keys(data).length;
 
-  // grid header
-  const thead = document.getElementById('grid-head');
-  thead.innerHTML = '<tr><th style="text-align:left;padding:0 4px 8px;font-size:10px;color:var(--text3);font-family:var(--mono);font-weight:600;min-width:90px;">Habit</th>' +
-    week.map((d, i) => {
+  // Week grid header
+  document.getElementById('grid-head').innerHTML =
+    '<tr><th style="text-align:left;padding:0 4px 8px;font-size:10px;color:var(--text3);font-family:var(--mono);font-weight:600;min-width:80px;">Habit</th>' +
+    week.map((d,i) => {
       const isT = d === today;
-      return `<th style="padding:0 2px 8px;font-size:10px;color:${isT ? 'var(--accent)' : 'var(--text3)'};font-family:var(--mono);font-weight:${isT?'600':'400'};text-align:center;">${DAYS_SHORT[i]}<br><span style="font-size:9px;">${parseInt(d.slice(8))}</span></th>`;
+      return '<th style="padding:0 2px 8px;font-size:10px;color:' + (isT?'var(--accent)':'var(--text3)') + ';font-family:var(--mono);font-weight:' + (isT?'600':'400') + ';text-align:center;">' +
+        DAYS_SHORT[i] + '<br><span style="font-size:9px;">' + parseInt(d.slice(8)) + '</span></th>';
     }).join('') + '</tr>';
 
-  // grid body
-  const tbody = document.getElementById('grid-body');
-  tbody.innerHTML = HABITS_DEFAULT.map(h => {
-    const streak = getStreak(h.id);
+  // Week grid body — uses cached streak
+  document.getElementById('grid-body').innerHTML = habits.map(h => {
+    const cur = streaks[h.id]?.cur || 0;
     const cells = week.map(d => {
-      const done = !!(data[d] && data[d][h.id]);
-      const future = D.isFuture(d);
-      let cls = 'habit-dot';
-      if (done) cls += ' done';
-      if (future) cls += ' future';
-      return `<td style="padding:3px 2px;text-align:center;"><div class="${cls}" onclick="toggle('${h.id}','${d}')" style="margin:0 auto;">${done ? '✓' : ''}</div></td>`;
+      const isDone   = !!(data[d] && data[d][h.id]);
+      const isFuture = D.isFuture(d);
+      return '<td style="padding:3px 2px;text-align:center;">' +
+        '<div class="habit-dot' + (isDone?' done':'') + (isFuture?' future':'') + '" ' +
+        'onclick="toggle(\'' + h.id + '\',\'' + d + '\')" style="margin:0 auto;">' +
+        (isDone?'✓':'') + '</div></td>';
     }).join('');
-    return `<tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:6px 4px;min-width:90px;">
-        <div style="font-size:12px;font-weight:500;">${h.name}</div>
-        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);">${streak > 0 ? streak + 'd' : '—'}</div>
-      </td>${cells}</tr>`;
+    return '<tr style="border-bottom:1px solid var(--border);">' +
+      '<td style="padding:6px 4px;min-width:80px;">' +
+        '<div style="font-size:12px;font-weight:500;">' + h.name + '</div>' +
+        '<div style="font-size:10px;color:var(--text3);font-family:var(--mono);">' + (cur>0?cur+'d':'—') + '</div>' +
+      '</td>' + cells + '</tr>';
   }).join('');
 
-  // per-habit bars
-  const bars = document.getElementById('habit-bars');
-  bars.innerHTML = HABITS_DEFAULT.map(h => {
-    const done = pastDays.filter(d => data[d] && data[d][h.id]).length;
-    const pct = pastDays.length ? Math.round(done / pastDays.length * 100) : 0;
-    const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
-    return `<div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--border);">
-      <div style="font-size:12px;width:100px;flex-shrink:0;">${h.name}</div>
-      <div style="flex:1;margin:0 10px;"><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${color};"></div></div></div>
-      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);width:28px;text-align:right;">${pct}%</div>
-    </div>`;
+  // Per-habit bars
+  document.getElementById('habit-bars').innerHTML = habits.map(h => {
+    const hDone = pastDays.filter(d => data[d] && data[d][h.id]).length;
+    const pct   = pastDays.length ? Math.round(hDone/pastDays.length*100) : 0;
+    const col   = pct>=75?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+    return '<div class="row-between" style="padding:6px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="font-size:12px;width:95px;flex-shrink:0;">' + h.name + '</div>' +
+      '<div style="flex:1;margin:0 8px;"><div class="prog-track"><div class="prog-fill" style="width:' + pct + '%;background:' + col + ';"></div></div></div>' +
+      '<div style="font-size:11px;font-family:var(--mono);color:var(--text3);width:28px;text-align:right;">' + pct + '%</div></div>';
   }).join('');
 
-  // streak list
-  document.getElementById('streak-list').innerHTML = HABITS_DEFAULT.map(h => {
-    const cur = getStreak(h.id);
-    const best = getBestStreak(h.id);
-    return `<div class="row-between" style="padding:7px 0;border-bottom:1px solid var(--border);">
-      <div style="font-size:13px;">${h.name}</div>
-      <div class="row" style="gap:12px;">
-        <div style="text-align:right;"><div style="font-size:14px;font-weight:600;color:var(--green);">${cur}</div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);">NOW</div></div>
-        <div style="text-align:right;"><div style="font-size:14px;font-weight:600;color:var(--accent);">${best}</div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);">BEST</div></div>
-      </div>
-    </div>`;
+  // Streaks list — uses cached values
+  document.getElementById('streak-list').innerHTML = habits.map(h => {
+    const { cur=0, best=0 } = streaks[h.id] || {};
+    return '<div class="row-between" style="padding:7px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="font-size:13px;">' + h.name + '</div>' +
+      '<div class="row" style="gap:12px;">' +
+        '<div style="text-align:right;"><div style="font-size:14px;font-weight:700;color:var(--green);">' + cur + '</div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);">NOW</div></div>' +
+        '<div style="text-align:right;"><div style="font-size:14px;font-weight:700;color:var(--accent);">' + best + '</div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);">BEST</div></div>' +
+      '</div></div>';
   }).join('');
 
   // 4-week trend chart
   const weeks4 = [-3,-2,-1,0].map(o => {
-    const wk = D.weekDates(o);
+    const wk   = D.weekDates(o);
     const past = wk.filter(d => d <= today);
-    let done = 0, possible = past.length * HABITS_DEFAULT.length;
-    past.forEach(d => HABITS_DEFAULT.forEach(h => { if (data[d] && data[d][h.id]) done++; }));
-    return possible ? Math.round(done / possible * 100) : 0;
+    let dn = 0, poss = past.length * habits.length;
+    past.forEach(d => habits.forEach(h => { if (data[d] && data[d][h.id]) dn++; }));
+    return poss ? Math.round(dn/poss*100) : 0;
   });
-  if (trendChart) trendChart.destroy();
-  trendChart = sparkLine(document.getElementById('chart-trend').getContext('2d'),
-    ['Week -3', 'Week -2', 'Last week', 'This week'],
-    [{ data: weeks4, label: 'Habit %', color: '#4fc3f7' }]);
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+  trendChart = sparkLine(
+    document.getElementById('chart-trend').getContext('2d'),
+    ['Week -3','Week -2','Last week','This week'],
+    [{data: weeks4, label:'Habit %', color:'#4fc3f7'}]
+  );
 }
 
+// ── SPIRAL — once on load, never inside render() ──
+function renderSpiral() {
+  const data   = getData();
+  const habits = getActiveHabits();
+  const today  = D.today();
+  const scores = [];
+  let d = APP.startDate, guard = 0;
+  while (d <= today && guard < 730) {
+    const dd = data[d] || {};
+    const done = habits.filter(h => dd[h.id]).length;
+    scores.push(habits.length ? Math.round(done/habits.length*100) : 0);
+    d = D.addDays(d, 1); guard++;
+  }
+  const canvas = document.getElementById('spiral-habits');
+  const sz = Math.max(canvas.parentElement ? canvas.parentElement.clientWidth - 32 : 0, 140);
+  canvas.style.width  = sz + 'px';
+  canvas.style.height = sz + 'px';
+  drawSpiral(canvas, scores, { label:'habits', color:'#4caf7d', maxVal:100 });
+}
+
+// ── BOOT ──
 render();
+requestAnimationFrame(() => requestAnimationFrame(renderSpiral));
 </script>
 </body>
 </html>

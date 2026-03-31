@@ -6,34 +6,29 @@
 <meta name="theme-color" content="#0a0a0a">
 <title>DSA · Aaryan OS</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.topic-tag { display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;font-size:11px;background:var(--accent-dim);color:var(--accent);font-family:var(--mono);margin:2px;cursor:pointer;border:1px solid transparent;transition:all .15s; }
+.topic-tag.sel { background:var(--accent);color:#000;border-color:var(--accent); }
+.star-btn { font-size:20px;cursor:pointer;color:var(--text3);transition:color .1s;line-height:1;padding:0 1px;background:none;border:none; }
+.star-btn.lit { color:#f0a030; }
+.sf-btn { padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius);background:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:var(--mono);transition:all .15s; }
+.sf-btn.active { border-color:#f0a030;color:#f0a030;background:rgba(240,160,48,0.1); }
+</style>
 </head>
 <body>
 <div class="topbar"></div>
 
-<!-- ADD MODAL -->
 <div class="modal-bg" id="modal-add">
   <div class="modal">
-    <div class="modal-title">
-      Add problem
-      <button class="modal-close" onclick="closeModal('modal-add')">×</button>
-    </div>
-    <div class="field"><label>Problem name / title</label><input type="text" id="m-title" placeholder="e.g. Two Sum"></div>
-    <div class="field"><label>Topic</label>
-      <select id="m-topic">
-        <option value="">Select topic</option>
-        <option>Arrays</option><option>Strings</option><option>Linked List</option>
-        <option>Stack</option><option>Queue</option><option>Trees</option>
-        <option>Graph</option><option>DP</option><option>Greedy</option>
-        <option>Binary Search</option><option>Recursion</option><option>Hashing</option>
-        <option>Sorting</option><option>Bit Manipulation</option><option>Two Pointers</option>
-        <option>Sliding Window</option><option>Other</option>
-      </select>
+    <div class="modal-title">Add problem <button class="modal-close" onclick="closeModal('modal-add')">×</button></div>
+    <div class="field"><label>Problem name / title</label><input type="text" id="m-title" placeholder="e.g. Two Sum, Merge K Lists..."></div>
+    <div class="field">
+      <label>Topics (tap multiple)</label>
+      <div id="topic-select" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;"></div>
     </div>
     <div class="field"><label>Difficulty</label>
       <select id="m-diff">
-        <option value="easy">Easy</option>
-        <option value="medium" selected>Medium</option>
-        <option value="hard">Hard</option>
+        <option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option>
       </select>
     </div>
     <div class="field"><label>Status</label>
@@ -45,50 +40,48 @@
         <option value="retry">Need to retry</option>
       </select>
     </div>
+    <div class="field">
+      <label>Stars (rate difficulty / quality)</label>
+      <div id="m-stars-input" style="display:flex;gap:4px;margin-top:4px;"></div>
+    </div>
     <div class="field"><label>Platform link (optional)</label><input type="url" id="m-link" placeholder="https://leetcode.com/..."></div>
-    <div class="field"><label>Time spent (minutes)</label><input type="number" id="m-time" placeholder="30" min="1"></div>
-    <div class="field"><label>Notes (optional)</label><textarea id="m-notes" rows="2" placeholder="Key insight, approach used..."></textarea></div>
-    <button class="btn btn-primary btn-full" onclick="addProblem()" style="margin-top:4px;">Save problem</button>
+    <div class="field"><label>Time spent (minutes)</label><input type="number" id="m-time" placeholder="30"></div>
+    <div class="field"><label>Notes</label><textarea id="m-notes" rows="2" placeholder="Key insight, approach..."></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="addProblem()">Save problem</button>
   </div>
 </div>
 
 <div class="page fade-in">
 
-  <!-- STATS -->
-  <p class="sec-label">Overview</p>
   <div class="stat-grid">
     <div class="stat-block"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total</div></div>
     <div class="stat-block"><div class="stat-val" id="s-today">0</div><div class="stat-lbl">Today</div></div>
-    <div class="stat-block"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Day streak</div></div>
-    <div class="stat-block"><div class="stat-val" id="s-time">0h</div><div class="stat-lbl">Time spent</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-streak">0</div><div class="stat-lbl">Streak</div></div>
+    <div class="stat-block"><div class="stat-val" id="s-time">0h</div><div class="stat-lbl">Time</div></div>
   </div>
 
-  <!-- STATUS BREAKDOWN -->
   <p class="sec-label">Status breakdown</p>
-  <div class="card" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;" id="status-grid"></div>
+  <div class="card" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;" id="status-grid"></div>
 
-  <!-- CHART: daily problems -->
-  <p class="sec-label">Problems per day (last 14 days)</p>
+  <p class="sec-label">Problems per day (last 14)</p>
   <div class="card"><div class="chart-wrap"><canvas id="chart-daily"></canvas></div></div>
 
-  <!-- TOPIC BREAKDOWN -->
   <p class="sec-label">By topic</p>
   <div class="card" id="topic-bars"></div>
 
-  <!-- FILTER + ADD -->
   <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
     <span>Problem sheet</span>
     <button class="btn btn-primary btn-sm" onclick="openModal('modal-add')">+ Add</button>
   </p>
 
-  <!-- FILTERS -->
-  <div class="row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-    <button class="btn btn-ghost btn-sm" id="f-all" onclick="setFilter('all')">All</button>
-    <button class="btn btn-ghost btn-sm" id="f-done" onclick="setFilter('done')">Done</button>
-    <button class="btn btn-ghost btn-sm" id="f-retry" onclick="setFilter('retry')">Retry</button>
-    <button class="btn btn-ghost btn-sm" id="f-hint" onclick="setFilter('hint')">Hint</button>
-    <button class="btn btn-ghost btn-sm" id="f-watched" onclick="setFilter('watched')">Watched</button>
-  </div>
+  <!-- STATUS FILTERS -->
+  <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;" id="status-filter-row"></div>
+
+  <!-- STAR FILTERS -->
+  <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;align-items:center;" id="star-filter-row"></div>
+
+  <!-- TOPIC FILTERS -->
+  <div id="topic-filter-row" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
 
   <div id="problem-list" style="padding-bottom:32px;"></div>
 </div>
@@ -99,96 +92,235 @@
 initDrawer('dsa.html');
 initTopbar('DSA Tracker');
 
-let activeFilter = 'all';
+const ALL_TOPICS = ['Arrays','Strings','Linked List','Stack','Queue','Trees','Graphs','DP','Greedy','Binary Search','Recursion','Hashing','Sorting','Bit Manipulation','Two Pointers','Sliding Window','Math','Heap','Trie','Backtracking','Divide & Conquer','Other'];
+let selectedTopics = [];
+let filterStatus = 'all', filterStar = 0, filterTopic = '';
 let dailyChart = null;
+let starRating = 0;
 
 const STATUS_META = {
-  'done':     { label: 'Done — one go',      color: 'var(--green)',  badge: 'badge-green'  },
-  'no-help':  { label: 'Done — no help',     color: 'var(--green)',  badge: 'badge-green'  },
-  'hint':     { label: 'Done with hint',     color: 'var(--amber)',  badge: 'badge-amber'  },
-  'watched':  { label: 'Watched solution',   color: 'var(--text3)',  badge: 'badge-gray'   },
-  'retry':    { label: 'Retry needed',       color: 'var(--red)',    badge: 'badge-red'    },
+  'done':    {label:'Done one go',  color:'var(--green)',  badge:'badge-green'},
+  'no-help': {label:'No help',      color:'var(--green)',  badge:'badge-green'},
+  'hint':    {label:'With hint',    color:'var(--amber)',  badge:'badge-amber'},
+  'watched': {label:'Watched',      color:'var(--text3)',  badge:'badge-gray'},
+  'retry':   {label:'Retry',        color:'var(--red)',    badge:'badge-red'},
 };
-const DIFF_BADGE = { easy: 'badge-green', medium: 'badge-amber', hard: 'badge-red' };
+const DIFF_BADGE = {easy:'badge-green', medium:'badge-amber', hard:'badge-red'};
 
 function getProblems() { return DB.get(DB.keys.dsa, []); }
 function saveProblems(p) { DB.set(DB.keys.dsa, p); }
 
+// ── BUILD STAR INPUT ──
+function buildStarInput(containerId, current, onClickFn) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'star-btn' + (i <= current ? ' lit' : '');
+    btn.textContent = '★';
+    btn.onclick = () => onClickFn(i);
+    container.appendChild(btn);
+  }
+}
+
+function setStar(n) {
+  starRating = n;
+  buildStarInput('m-stars-input', n, setStar);
+}
+
+// ── BUILD STATUS FILTER ROW ──
+function buildStatusFilterRow() {
+  const statuses = ['all','done','retry','hint','watched'];
+  const labels = {all:'All', done:'Done', retry:'Retry', hint:'Hint', watched:'Watched'};
+  const row = document.getElementById('status-filter-row');
+  row.innerHTML = '';
+  statuses.forEach(s => {
+    const btn = document.createElement('button');
+    btn.id = 'f-' + s;
+    btn.className = 'btn ' + (s === filterStatus ? 'btn-primary' : 'btn-ghost') + ' btn-sm';
+    btn.textContent = labels[s];
+    btn.onclick = () => setStatusFilter(s);
+    row.appendChild(btn);
+  });
+}
+
+// ── BUILD STAR FILTER ROW ──
+function buildStarFilterRow() {
+  const row = document.getElementById('star-filter-row');
+  row.innerHTML = '';
+
+  const lbl = document.createElement('span');
+  lbl.style.cssText = 'font-size:10px;font-family:var(--mono);color:var(--text3);';
+  lbl.textContent = 'STARS:';
+  row.appendChild(lbl);
+
+  // "All" button
+  const allBtn = document.createElement('button');
+  allBtn.className = 'sf-btn' + (filterStar === 0 ? ' active' : '');
+  allBtn.textContent = 'All';
+  allBtn.onclick = () => setStarFilter(0);
+  row.appendChild(allBtn);
+
+  // 1–5 star buttons
+  for (let n = 1; n <= 5; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'sf-btn' + (filterStar === n ? ' active' : '');
+    btn.textContent = '★'.repeat(n);
+    btn.onclick = () => setStarFilter(n);
+    row.appendChild(btn);
+  }
+}
+
+// ── BUILD TOPIC SELECT IN MODAL ──
+function buildTopicSelect() {
+  const el = document.getElementById('topic-select');
+  el.innerHTML = '';
+  ALL_TOPICS.forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'topic-tag' + (selectedTopics.includes(t) ? ' sel' : '');
+    span.textContent = t;
+    span.onclick = () => toggleTopic(t, span);
+    el.appendChild(span);
+  });
+}
+
+function toggleTopic(t, el) {
+  const idx = selectedTopics.indexOf(t);
+  if (idx >= 0) { selectedTopics.splice(idx, 1); el.classList.remove('sel'); }
+  else { selectedTopics.push(t); el.classList.add('sel'); }
+}
+
+function setStatusFilter(val) {
+  filterStatus = val;
+  buildStatusFilterRow();
+  renderList();
+}
+
+function setStarFilter(n) {
+  filterStar = n;
+  buildStarFilterRow();
+  renderList();
+}
+
+function setTopicFilter(t) {
+  filterTopic = filterTopic === t ? '' : t;
+  renderTopicFilterRow();
+  renderList();
+}
+
+// ── ADD PROBLEM ──
 function addProblem() {
   const title = document.getElementById('m-title').value.trim();
   if (!title) { toast('Enter problem title'); return; }
+  if (!selectedTopics.length) { toast('Select at least one topic'); return; }
   const problems = getProblems();
   problems.unshift({
     id: Date.now(),
     date: D.today(),
     title,
-    topic: document.getElementById('m-topic').value,
+    topics: [...selectedTopics],
     diff: document.getElementById('m-diff').value,
     status: document.getElementById('m-status').value,
+    stars: starRating,
     link: document.getElementById('m-link').value.trim(),
     time: parseInt(document.getElementById('m-time').value) || 0,
     notes: document.getElementById('m-notes').value.trim(),
   });
   saveProblems(problems);
   closeModal('modal-add');
+  selectedTopics = []; starRating = 0;
   ['m-title','m-link','m-time','m-notes'].forEach(id => document.getElementById(id).value = '');
-  toast('Problem saved'); render();
+  buildTopicSelect();
+  buildStarInput('m-stars-input', 0, setStar);
+  toast('Problem saved');
+  render();
 }
 
 function deleteProblem(id) {
-  if (!confirm('Delete this problem?')) return;
+  if (!confirm('Delete?')) return;
   saveProblems(getProblems().filter(p => p.id !== id));
   render();
 }
 
-function setFilter(f) {
-  activeFilter = f;
-  ['all','done','retry','hint','watched'].forEach(x => {
-    document.getElementById('f-' + x).classList.toggle('btn-primary', x === f);
-    document.getElementById('f-' + x).classList.toggle('btn-ghost', x !== f);
-  });
-  renderList();
+// Inline star update on saved problems
+function updateStar(id, n) {
+  const problems = getProblems();
+  const p = problems.find(x => x.id === id);
+  if (p) { p.stars = n; saveProblems(problems); renderList(); }
 }
 
 function getDSAStreak() {
   const problems = getProblems();
-  const daysWithProblems = [...new Set(problems.map(p => p.date))].sort().reverse();
-  let streak = 0;
-  const today = D.today();
-  let expected = today;
-  for (const d of daysWithProblems) {
-    if (d === expected) { streak++; const dt = new Date(d); dt.setDate(dt.getDate()-1); expected = dt.toISOString().slice(0,10); }
-    else if (d < expected) break;
+  const days = [...new Set(problems.map(p => p.date))].sort().reverse();
+  let streak = 0, expected = D.today();
+  for (const d of days) {
+    if (d === expected) {
+      streak++;
+      const dt = new Date(d + 'T00:00:00'); dt.setDate(dt.getDate()-1);
+      expected = dt.toISOString().slice(0,10);
+    } else if (d < expected) break;
   }
   return streak;
+}
+
+function renderTopicFilterRow() {
+  const problems = getProblems();
+  const topicCounts = {};
+  problems.forEach(p => (p.topics || (p.topic ? [p.topic] : [])).forEach(t => {
+    topicCounts[t] = (topicCounts[t] || 0) + 1;
+  }));
+  const topics = Object.keys(topicCounts).sort((a,b) => topicCounts[b] - topicCounts[a]);
+  const row = document.getElementById('topic-filter-row');
+  row.innerHTML = '';
+
+  const makeBtn = (label, val, count) => {
+    const btn = document.createElement('button');
+    const isActive = filterTopic === val;
+    btn.style.cssText = 'font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid ' + (isActive?'var(--accent)':'var(--border)') + ';background:' + (isActive?'var(--accent-dim)':'none') + ';color:' + (isActive?'var(--accent)':'var(--text3)') + ';cursor:pointer;font-family:var(--mono);';
+    btn.textContent = label + (count ? ' ' + count : '');
+    btn.onclick = () => setTopicFilter(val);
+    row.appendChild(btn);
+  };
+  makeBtn('All topics', '');
+  topics.forEach(t => makeBtn(t, t, topicCounts[t]));
+}
+
+// Render inline stars for a problem card (clickable)
+function renderStarRow(stars, problemId) {
+  let html = '<div style="display:flex;gap:2px;margin:4px 0;">';
+  for (let i = 1; i <= 5; i++) {
+    html += '<button type="button" class="star-btn' + (i <= (stars||0) ? ' lit' : '') + '" onclick="updateStar(' + problemId + ',' + i + ')">★</button>';
+  }
+  html += '</div>';
+  return html;
 }
 
 function render() {
   const problems = getProblems();
   const today = D.today();
-  const todayProbs = problems.filter(p => p.date === today);
-  const totalTime = problems.reduce((a, p) => a + (p.time || 0), 0);
+  const totalTime = problems.reduce((a,p) => a + (p.time||0), 0);
 
   document.getElementById('s-total').textContent = problems.length;
-  document.getElementById('s-today').textContent = todayProbs.length;
+  document.getElementById('s-today').textContent = problems.filter(p => p.date === today).length;
   document.getElementById('s-streak').textContent = getDSAStreak();
   document.getElementById('s-time').textContent = Math.round(totalTime / 60) + 'h';
 
   // status grid
-  const statusCounts = {};
-  problems.forEach(p => { statusCounts[p.status] = (statusCounts[p.status] || 0) + 1; });
-  document.getElementById('status-grid').innerHTML = Object.entries(STATUS_META).map(([k, v]) =>
-    `<div class="card-sm" style="text-align:center;">
-      <div style="font-size:20px;font-weight:700;color:${v.color};">${statusCounts[k] || 0}</div>
-      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px;">${k.toUpperCase()}</div>
-    </div>`).join('');
+  const sc = {};
+  problems.forEach(p => { sc[p.status] = (sc[p.status]||0) + 1; });
+  document.getElementById('status-grid').innerHTML = Object.entries(STATUS_META).map(([k,v]) =>
+    '<div class="card-sm" style="text-align:center;"><div style="font-size:20px;font-weight:700;color:'+v.color+';">'+(sc[k]||0)+'</div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:3px;">'+k.toUpperCase()+'</div></div>'
+  ).join('');
 
-  // daily chart (14 days)
-  const last14 = Array.from({length:14}, (_,i) => {
-    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - (13 - i));
-    return d.toISOString().slice(0,10);
-  });
-  if (dailyChart) dailyChart.destroy();
+  // daily chart
+  const last14 = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i);
+    last14.push(d.toISOString().slice(0,10));
+  }
+  if (dailyChart) { dailyChart.destroy(); dailyChart = null; }
   dailyChart = sparkBar(
     document.getElementById('chart-daily').getContext('2d'),
     last14.map(d => D.fmt(d)),
@@ -198,48 +330,65 @@ function render() {
 
   // topic bars
   const topicCounts = {};
-  problems.forEach(p => { if (p.topic) topicCounts[p.topic] = (topicCounts[p.topic] || 0) + 1; });
+  problems.forEach(p => (p.topics || (p.topic ? [p.topic] : [])).forEach(t => {
+    topicCounts[t] = (topicCounts[t]||0) + 1;
+  }));
   const sorted = Object.entries(topicCounts).sort((a,b) => b[1]-a[1]);
   const maxT = sorted[0]?.[1] || 1;
   document.getElementById('topic-bars').innerHTML = sorted.length ? sorted.map(([topic, count]) =>
-    `<div class="row-between" style="padding:5px 0;border-bottom:1px solid var(--border);">
-      <div style="font-size:12px;width:110px;flex-shrink:0;">${topic}</div>
-      <div style="flex:1;margin:0 10px;"><div class="prog-track"><div class="prog-fill" style="width:${Math.round(count/maxT*100)}%;"></div></div></div>
-      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);width:20px;text-align:right;">${count}</div>
-    </div>`).join('') : '<div class="empty">No problems yet.</div>';
+    '<div class="row-between" style="padding:5px 0;border-bottom:1px solid var(--border);">' +
+    '<div style="font-size:12px;width:110px;flex-shrink:0;">' + topic + '</div>' +
+    '<div style="flex:1;margin:0 8px;"><div class="prog-track"><div class="prog-fill" style="width:'+Math.round(count/maxT*100)+'%;"></div></div></div>' +
+    '<div style="font-size:11px;font-family:var(--mono);color:var(--text3);width:20px;text-align:right;">'+count+'</div></div>'
+  ).join('') : '<div class="empty">No problems yet.</div>';
 
+  buildStatusFilterRow();
+  buildStarFilterRow();
+  renderTopicFilterRow();
   renderList();
 }
 
 function renderList() {
-  const problems = getProblems();
-  const filtered = activeFilter === 'all' ? problems : problems.filter(p => p.status === activeFilter || (activeFilter === 'done' && p.status === 'no-help'));
+  let problems = getProblems();
+
+  if (filterStatus !== 'all') {
+    problems = problems.filter(p =>
+      p.status === filterStatus || (filterStatus === 'done' && p.status === 'no-help')
+    );
+  }
+  if (filterStar > 0) problems = problems.filter(p => (p.stars||0) === filterStar);
+  if (filterTopic) problems = problems.filter(p => (p.topics || (p.topic?[p.topic]:[])).includes(filterTopic));
+
   const el = document.getElementById('problem-list');
-  if (!filtered.length) { el.innerHTML = '<div class="empty">No problems here.</div>'; return; }
-  el.innerHTML = filtered.map(p => {
+  if (!problems.length) { el.innerHTML = '<div class="empty">No problems match filters.</div>'; return; }
+
+  el.innerHTML = problems.map(p => {
     const sm = STATUS_META[p.status] || STATUS_META['done'];
-    return `<div class="card" style="margin-bottom:8px;">
-      <div class="row-between" style="margin-bottom:6px;">
-        <div style="font-weight:600;font-size:14px;flex:1;margin-right:8px;">${p.title}</div>
-        <span class="badge ${sm.badge}" style="flex-shrink:0;">${p.status}</span>
-      </div>
-      <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-        ${p.topic ? `<span class="badge badge-gray">${p.topic}</span>` : ''}
-        ${p.diff ? `<span class="badge ${DIFF_BADGE[p.diff] || 'badge-gray'}">${p.diff}</span>` : ''}
-        ${p.time ? `<span class="badge badge-gray">${p.time}m</span>` : ''}
-        <span style="font-size:11px;color:var(--text3);font-family:var(--mono);">${D.fmt(p.date)}</span>
-      </div>
-      ${p.notes ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5;">${p.notes}</div>` : ''}
-      <div class="row-between">
-        ${p.link ? `<a href="${p.link}" target="_blank" style="font-size:11px;color:var(--accent);font-family:var(--mono);">Open problem ↗</a>` : '<span></span>'}
-        <button class="btn btn-danger btn-sm" onclick="deleteProblem(${p.id})">Delete</button>
-      </div>
-    </div>`;
+    const topics = (p.topics || (p.topic ? [p.topic] : [])).filter(Boolean);
+    return '<div class="card" style="margin-bottom:8px;">' +
+      '<div class="row-between" style="margin-bottom:6px;">' +
+        '<div style="font-weight:600;font-size:14px;flex:1;margin-right:8px;">' + p.title + '</div>' +
+        '<span class="badge ' + sm.badge + '" style="flex-shrink:0;">' + p.status + '</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;">' +
+        topics.map(t => '<span class="topic-tag" style="cursor:default;">' + t + '</span>').join('') +
+        (p.diff ? '<span class="badge ' + (DIFF_BADGE[p.diff]||'badge-gray') + '">' + p.diff + '</span>' : '') +
+        (p.time ? '<span class="badge badge-gray">' + p.time + 'm</span>' : '') +
+        '<span style="font-size:11px;color:var(--text3);font-family:var(--mono);">' + D.fmt(p.date) + '</span>' +
+      '</div>' +
+      renderStarRow(p.stars||0, p.id) +
+      (p.notes ? '<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5;">' + p.notes + '</div>' : '') +
+      '<div class="row-between" style="margin-top:8px;">' +
+        (p.link ? '<a href="' + p.link + '" target="_blank" style="font-size:11px;color:var(--accent);font-family:var(--mono);">Open ↗</a>' : '<span></span>') +
+        '<button class="btn btn-danger btn-sm" onclick="deleteProblem(' + p.id + ')">Delete</button>' +
+      '</div></div>';
   }).join('');
 }
 
+// ── INIT ──
+buildTopicSelect();
+buildStarInput('m-stars-input', 0, setStar);
 render();
-setFilter('all');
 </script>
 </body>
 </html>

@@ -9,36 +9,66 @@
 </head>
 <body>
 <div class="topbar"></div>
+
+<!-- ADD / EDIT SCHEDULE BLOCK MODAL -->
+<div class="modal-bg" id="modal-block">
+  <div class="modal">
+    <div class="modal-title" id="block-modal-title">Add block <button class="modal-close" onclick="closeModal('modal-block')">×</button></div>
+    <input type="hidden" id="b-editing-idx" value="">
+    <div class="field"><label>Time</label><input type="text" id="b-time" placeholder="5:00–5:30 or 5:00"></div>
+    <div class="field"><label>Label</label><input type="text" id="b-label" placeholder="DSA deep work"></div>
+    <div class="field"><label>Sub-text / note</label><input type="text" id="b-sub" placeholder="1–2 problems · no music"></div>
+    <div class="field"><label>Category (for colour)</label>
+      <select id="b-cat">
+        <option value="skill">Skill (blue)</option>
+        <option value="body">Body (green)</option>
+        <option value="work">Work (purple)</option>
+        <option value="social">Social (gray)</option>
+        <option value="mind">Mind (purple)</option>
+        <option value="wake">Wake / energy (amber)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveBlock()">Save block</button>
+  </div>
+</div>
+
 <div class="page fade-in">
 
-  <!-- SCHEDULE BLOCKS -->
-  <p class="sec-label">Your daily schedule</p>
+  <!-- SCHEDULE -->
+  <p class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Your schedule</span>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="resetSchedule()">Reset</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddBlock()">+ Block</button>
+    </div>
+  </p>
   <div id="schedule-display"></div>
 
-  <!-- TODAY FOLLOW LOG -->
+  <!-- FOLLOW LOG -->
   <p class="sec-label">Did you follow it today?</p>
   <div class="card">
     <div style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:12px;" id="sched-date"></div>
     <div id="sched-follow"></div>
     <hr class="divider">
-    <div class="field"><label>Notes — what actually happened today</label>
-      <textarea id="sched-notes" rows="3" placeholder="Woke up at 6 instead of 5, skipped DSA in morning but did it evening..."></textarea>
-    </div>
-    <div class="field"><label>Schedule adherence</label>
+    <div style="margin-bottom:6px;"><div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:4px;">BLOCKS FOLLOWED TODAY</div><div id="follow-score-bar"><div class="prog-track"><div class="prog-fill" id="follow-bar" style="width:0%"></div></div><div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:3px;" id="follow-score-txt">0/0</div></div></div>
+    <div class="field" style="margin-top:10px;"><label>Schedule adherence</label>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-ghost btn-sm" style="flex:1;" id="adh-low"  onclick="setAdh('low',this)">Poor</button>
         <button class="btn btn-ghost btn-sm" style="flex:1;" id="adh-mid"  onclick="setAdh('mid',this)">Partial</button>
         <button class="btn btn-ghost btn-sm" style="flex:1;" id="adh-high" onclick="setAdh('high',this)">Followed</button>
       </div>
     </div>
-    <button class="btn btn-primary btn-full" onclick="saveSchedLog()">Save today's schedule log</button>
+    <div class="field"><label>What actually happened today</label>
+      <textarea id="sched-notes" rows="3" placeholder="Woke at 6 instead of 5, skipped morning DSA but did it evening..."></textarea>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveSchedLog()">Save today's log</button>
   </div>
 
   <!-- ANALYSIS -->
-  <p class="sec-label">Adherence analysis (last 14 days)</p>
+  <p class="sec-label">Adherence (last 14 days)</p>
   <div class="card"><div class="chart-wrap"><canvas id="chart-adh"></canvas></div></div>
 
-  <!-- LOG HISTORY -->
+  <!-- HISTORY -->
   <p class="sec-label">Schedule history</p>
   <div id="sched-history" style="padding-bottom:32px;"></div>
 
@@ -50,146 +80,199 @@
 initDrawer('schedule.html');
 initTopbar('Schedule');
 
-let schedAdh = null;
-let adhChart = null;
-
-const SCHEDULE = [
-  { time: '5:00',       label: 'Wake up',            sub: 'No phone for 30 min',            cat: 'body',      color: 'var(--amber)' },
-  { time: '5:00–5:30',  label: 'Morning routine',    sub: '500ml water · eye drops · stretch', cat: 'body',   color: 'var(--amber)' },
-  { time: '5:30–5:50',  label: 'Meditation / walk',  sub: 'Sunlight exposure',               cat: 'body',      color: 'var(--green)' },
-  { time: '5:50–7:30',  label: 'DSA deep work',      sub: '1–2 problems · no music',         cat: 'skill',     color: 'var(--accent)' },
-  { time: '7:30–9:00',  label: 'Morning prep',        sub: 'Breakfast · hygiene · debrief',  cat: 'body',      color: 'var(--amber)' },
-  { time: '9:00–1:00',  label: 'College / internship',sub: 'CodeAlpha tasks · full output',  cat: 'work',      color: 'var(--purple)' },
-  { time: '1:00–2:00',  label: 'Lunch + social',     sub: 'Present at college. No guilt.',   cat: 'social',    color: 'var(--text3)' },
-  { time: '2:00–5:00',  label: 'Skill block',         sub: 'React · Tailwind · project build', cat: 'skill',  color: 'var(--accent)' },
-  { time: '5:00–6:00',  label: 'Physical',            sub: 'Gym · walk · bodyweight',         cat: 'body',      color: 'var(--green)' },
-  { time: '6:00–7:30',  label: 'DSA round 2',         sub: 'Revision · weak areas',           cat: 'skill',     color: 'var(--accent)' },
-  { time: '7:30–8:30',  label: 'Dinner + learning',  sub: 'Book · podcast (30 min)',          cat: 'mind',      color: 'var(--purple)' },
-  { time: '8:30–9:30',  label: 'Wind down',           sub: 'Nightly check-in · plan tomorrow',cat: 'mind',      color: 'var(--text2)' },
-  { time: '9:30–10:00', label: 'Water + eye drops',  sub: '4–5L target · 3rd eye drop',      cat: 'body',      color: 'var(--green)' },
-  { time: '10:00–10:30',label: 'Sleep',               sub: 'Phone down · lights off',         cat: 'body',      color: 'var(--text3)' },
+const DEFAULT_SCHEDULE = [
+  { time:'5:00',        label:'Wake up',             sub:'No phone for 30 min',              cat:'wake'   },
+  { time:'5:00–5:30',   label:'Morning routine',     sub:'500ml water · eye drops · stretch', cat:'body'   },
+  { time:'5:30–5:50',   label:'Meditation / walk',   sub:'Sunlight exposure',                 cat:'body'   },
+  { time:'5:50–7:30',   label:'DSA deep work',       sub:'1–2 problems · no music',           cat:'skill'  },
+  { time:'7:30–9:00',   label:'Morning prep',         sub:'Breakfast · hygiene · debrief',    cat:'wake'   },
+  { time:'9:00–1:00',   label:'College / internship', sub:'CodeAlpha tasks · full output',    cat:'work'   },
+  { time:'1:00–2:00',   label:'Lunch + social',      sub:'Present at college. No guilt.',     cat:'social' },
+  { time:'2:00–5:00',   label:'Skill block',          sub:'React · Tailwind · project build', cat:'skill'  },
+  { time:'5:00–6:00',   label:'Physical',             sub:'Gym · walk · bodyweight',          cat:'body'   },
+  { time:'6:00–7:30',   label:'DSA round 2',          sub:'Revision · weak areas',            cat:'skill'  },
+  { time:'7:30–8:30',   label:'Dinner + learning',   sub:'Book · podcast (30 min)',           cat:'mind'   },
+  { time:'8:30–9:30',   label:'Wind down',            sub:'Nightly check-in · plan tomorrow', cat:'mind'   },
+  { time:'9:30–10:00',  label:'Water + eye drops',   sub:'4–5L target · 3rd eye drop',       cat:'body'   },
+  { time:'10:00–10:30', label:'Sleep',                sub:'Phone down · lights off',           cat:'social' },
 ];
 
-document.getElementById('sched-date').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+const CAT_COLOR = {
+  skill:'var(--accent)', body:'var(--green)', work:'var(--purple)',
+  social:'var(--text3)', mind:'var(--purple)', wake:'var(--amber)', default:'var(--text2)'
+};
+
+let schedAdh = null, adhChart = null;
+
+document.getElementById('sched-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+
+function getSchedule() { return DB.get(DB.keys.scheduleDef, DEFAULT_SCHEDULE); }
+function saveSchedule(s) { DB.set(DB.keys.scheduleDef, s); }
+
+function resetSchedule() {
+  if(!confirm('Reset schedule to default?')) return;
+  DB.set(DB.keys.scheduleDef, DEFAULT_SCHEDULE);
+  renderSchedule(); renderFollowBlocks(); toast('Schedule reset to default');
+}
+
+function openAddBlock(idx) {
+  document.getElementById('b-editing-idx').value = idx !== undefined ? idx : '';
+  document.getElementById('block-modal-title').innerHTML = (idx!==undefined?'Edit block':'Add block') + ' <button class="modal-close" onclick="closeModal(\'modal-block\')">×</button>';
+  if(idx !== undefined) {
+    const s = getSchedule()[idx];
+    document.getElementById('b-time').value = s.time;
+    document.getElementById('b-label').value = s.label;
+    document.getElementById('b-sub').value = s.sub;
+    document.getElementById('b-cat').value = s.cat;
+  } else {
+    ['b-time','b-label','b-sub'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('b-cat').value='skill';
+  }
+  openModal('modal-block');
+}
+
+function saveBlock() {
+  const time=document.getElementById('b-time').value.trim();
+  const label=document.getElementById('b-label').value.trim();
+  if(!time||!label){toast('Enter time and label');return;}
+  const schedule=getSchedule();
+  const block={time,label,sub:document.getElementById('b-sub').value.trim(),cat:document.getElementById('b-cat').value};
+  const editIdx=document.getElementById('b-editing-idx').value;
+  if(editIdx!=='') schedule[parseInt(editIdx)]=block;
+  else schedule.push(block);
+  saveSchedule(schedule);
+  closeModal('modal-block');
+  renderSchedule(); renderFollowBlocks();
+  toast(editIdx!==''?'Block updated':'Block added');
+}
+
+function deleteBlock(idx) {
+  if(!confirm('Delete this schedule block?')) return;
+  const schedule=getSchedule();
+  schedule.splice(idx,1);
+  saveSchedule(schedule);
+  renderSchedule(); renderFollowBlocks();
+  toast('Block deleted');
+}
 
 function renderSchedule() {
-  document.getElementById('schedule-display').innerHTML = SCHEDULE.map((s, i) => `
-    <div style="display:flex;gap:12px;margin-bottom:4px;align-items:stretch;">
-      <div style="width:72px;flex-shrink:0;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text3);padding-top:11px;">${s.time}</div>
+  const schedule=getSchedule();
+  document.getElementById('schedule-display').innerHTML = schedule.map((s,i) => `
+    <div style="display:flex;gap:10px;margin-bottom:4px;align-items:stretch;">
+      <div style="width:68px;flex-shrink:0;text-align:right;font-size:10px;font-family:var(--mono);color:var(--text3);padding-top:11px;line-height:1.3;">${s.time}</div>
       <div style="width:2px;background:var(--border);border-radius:99px;flex-shrink:0;position:relative;">
-        <div style="width:8px;height:8px;border-radius:50%;background:${s.color};border:1px solid var(--bg);position:absolute;left:-3px;top:12px;"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:${CAT_COLOR[s.cat]||CAT_COLOR.default};border:1px solid var(--bg);position:absolute;left:-2.5px;top:12px;"></div>
       </div>
-      <div style="flex:1;background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:0;">
-        <div style="font-size:13px;font-weight:500;">${s.label}</div>
-        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px;">${s.sub}</div>
+      <div style="flex:1;background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius);padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div>
+          <div style="font-size:13px;font-weight:500;">${s.label}</div>
+          ${s.sub?`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px;">${s.sub}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button onclick="openAddBlock(${i})" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:2px 4px;" title="Edit">✏</button>
+          <button onclick="deleteBlock(${i})" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:2px 4px;" title="Delete">×</button>
+        </div>
       </div>
     </div>`).join('');
 }
 
 function renderFollowBlocks() {
-  const logs = DB.get(DB.keys.schedule, []);
-  const today = D.today();
-  const todayLog = logs.find(l => l.date === today);
-  const todayBlocks = todayLog?.blocks || {};
+  const schedule=getSchedule();
+  const logs=DB.get(DB.keys.schedule,[]);
+  const today=D.today();
+  const todayLog=logs.find(l=>l.date===today);
+  const todayBlocks=todayLog?.blocks||{};
+  const done=Object.values(todayBlocks).filter(Boolean).length;
+  document.getElementById('follow-bar').style.width=schedule.length?Math.round(done/schedule.length*100)+'%':'0%';
+  document.getElementById('follow-score-txt').textContent=`${done}/${schedule.length} blocks`;
 
-  document.getElementById('sched-follow').innerHTML = SCHEDULE.map((s, i) => {
-    const done = !!todayBlocks[i];
-    return `<div onclick="toggleBlock(${i}, this)"
-      style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius);margin-bottom:4px;cursor:pointer;background:${done?'rgba(76,175,125,0.1)':'var(--bg2)'};border:1px solid ${done?'var(--green)':'var(--border)'};">
-      <div style="width:16px;height:16px;border-radius:4px;border:1px solid ${done?'var(--green)':'var(--border2)'};background:${done?'var(--green)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:${done?'#000':'transparent'};">✓</div>
+  document.getElementById('sched-follow').innerHTML = schedule.map((s,i)=>{
+    const isDone=!!todayBlocks[i];
+    return `<div onclick="toggleBlock(${i},this)"
+      style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius);margin-bottom:4px;cursor:pointer;background:${isDone?'rgba(76,175,125,0.08)':'var(--bg2)'};border:1px solid ${isDone?'var(--green)':'var(--border)'};">
+      <div style="width:16px;height:16px;border-radius:4px;border:1px solid ${isDone?'var(--green)':'var(--border2)'};background:${isDone?'var(--green)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:${isDone?'#000':'transparent'};">✓</div>
       <div style="flex:1;">
-        <div style="font-size:12px;font-weight:500;color:${done?'var(--green)':'var(--text)'};">${s.label}</div>
+        <div style="font-size:12px;font-weight:500;color:${isDone?'var(--green)':'var(--text)'};">${s.label}</div>
         <div style="font-size:10px;font-family:var(--mono);color:var(--text3);">${s.time}</div>
       </div>
     </div>`;
   }).join('');
 
-  // pre-fill notes/adherence if log exists
-  if (todayLog) {
-    document.getElementById('sched-notes').value = todayLog.notes || '';
-    if (todayLog.adherence) setAdh(todayLog.adherence, document.getElementById('adh-' + todayLog.adherence));
+  if(todayLog) {
+    document.getElementById('sched-notes').value=todayLog.notes||'';
+    if(todayLog.adherence) setAdh(todayLog.adherence,document.getElementById('adh-'+todayLog.adherence));
   }
 }
 
-function toggleBlock(idx, row) {
-  const logs = DB.get(DB.keys.schedule, []);
-  const today = D.today();
-  let log = logs.find(l => l.date === today);
-  if (!log) { log = { date: today, blocks: {}, notes: '', adherence: null }; logs.unshift(log); }
-  if (!log.blocks) log.blocks = {};
-  log.blocks[idx] = !log.blocks[idx];
-  const done = log.blocks[idx];
-  row.style.background = done ? 'rgba(76,175,125,0.1)' : 'var(--bg2)';
-  row.style.borderColor = done ? 'var(--green)' : 'var(--border)';
-  const box = row.querySelector('div');
-  box.style.borderColor = done ? 'var(--green)' : 'var(--border2)';
-  box.style.background = done ? 'var(--green)' : 'transparent';
-  box.style.color = done ? '#000' : 'transparent';
-  row.querySelector('div:nth-child(2) div').style.color = done ? 'var(--green)' : 'var(--text)';
-  DB.set(DB.keys.schedule, logs);
-  updateFollowScore(log.blocks);
+function toggleBlock(idx,row){
+  const logs=DB.get(DB.keys.schedule,[]);
+  const today=D.today();
+  let log=logs.find(l=>l.date===today);
+  if(!log){log={date:today,blocks:{},notes:'',adherence:null};logs.unshift(log);}
+  if(!log.blocks)log.blocks={};
+  log.blocks[idx]=!log.blocks[idx];
+  DB.set(DB.keys.schedule,logs);
+  const schedule=getSchedule();
+  const done=Object.values(log.blocks).filter(Boolean).length;
+  document.getElementById('follow-bar').style.width=schedule.length?Math.round(done/schedule.length*100)+'%':'0%';
+  document.getElementById('follow-score-txt').textContent=`${done}/${schedule.length} blocks`;
+  const isDone=log.blocks[idx];
+  row.style.background=isDone?'rgba(76,175,125,0.08)':'var(--bg2)';
+  row.style.borderColor=isDone?'var(--green)':'var(--border)';
+  row.children[0].style.borderColor=isDone?'var(--green)':'var(--border2)';
+  row.children[0].style.background=isDone?'var(--green)':'transparent';
+  row.children[0].style.color=isDone?'#000':'transparent';
+  row.children[1].children[0].style.color=isDone?'var(--green)':'var(--text)';
 }
 
-function updateFollowScore(blocks) {
-  const done = Object.values(blocks).filter(Boolean).length;
-  // update in parent score view if visible
+function setAdh(val,el){
+  schedAdh=val;
+  ['low','mid','high'].forEach(k=>{const b=document.getElementById('adh-'+k);b.style.background='';b.style.borderColor='';b.style.color='';b.className='btn btn-ghost btn-sm';b.style.flex='1';});
+  const colors={low:'var(--red)',mid:'var(--amber)',high:'var(--green)'};
+  el.style.background=colors[val]+'33';el.style.borderColor=colors[val];el.style.color=colors[val];
 }
 
-function setAdh(val, el) {
-  schedAdh = val;
-  ['low','mid','high'].forEach(k => {
-    const b = document.getElementById('adh-'+k);
-    b.style.background = ''; b.style.borderColor = ''; b.style.color = '';
-    b.className = 'btn btn-ghost btn-sm';
-  });
-  const colors = { low: 'var(--red)', mid: 'var(--amber)', high: 'var(--green)' };
-  el.style.background = colors[val] + '33';
-  el.style.borderColor = colors[val];
-  el.style.color = colors[val];
-}
-
-function saveSchedLog() {
-  const logs = DB.get(DB.keys.schedule, []);
-  const today = D.today();
-  let log = logs.find(l => l.date === today);
-  if (!log) { log = { date: today, blocks: {} }; logs.unshift(log); }
-  log.notes = document.getElementById('sched-notes').value.trim();
-  log.adherence = schedAdh;
-  const done = Object.values(log.blocks || {}).filter(Boolean).length;
-  log.blockScore = Math.round(done / SCHEDULE.length * 100);
-  DB.set(DB.keys.schedule, logs);
+function saveSchedLog(){
+  const logs=DB.get(DB.keys.schedule,[]);
+  const today=D.today();
+  let log=logs.find(l=>l.date===today);
+  if(!log){log={date:today,blocks:{}};logs.unshift(log);}
+  log.notes=document.getElementById('sched-notes').value.trim();
+  log.adherence=schedAdh;
+  const schedule=getSchedule();
+  const done=Object.values(log.blocks||{}).filter(Boolean).length;
+  log.blockScore=schedule.length?Math.round(done/schedule.length*100):0;
+  DB.set(DB.keys.schedule,logs);
   toast('Schedule log saved'); renderHistory(); renderChart();
 }
 
-function renderChart() {
-  const logs = DB.get(DB.keys.schedule, []);
-  const last14 = Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));return d.toISOString().slice(0,10);});
-  const scoreByDate = {};
-  const adhVal = { low: 30, mid: 65, high: 100 };
-  logs.forEach(l => { scoreByDate[l.date] = l.blockScore ?? (adhVal[l.adherence] || 0); });
-  if (adhChart) adhChart.destroy();
-  adhChart = sparkBar(document.getElementById('chart-adh').getContext('2d'),
-    last14.map(d => D.fmt(d)),
-    last14.map(d => scoreByDate[d] ?? null),
-    '#4fc3f7');
+function renderChart(){
+  const logs=DB.get(DB.keys.schedule,[]);
+  const schedule=getSchedule();
+  const last14=Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));return d.toISOString().slice(0,10);});
+  const scoreByDate={};const adhVal={low:30,mid:65,high:100};
+  logs.forEach(l=>{scoreByDate[l.date]=l.blockScore??(adhVal[l.adherence]||0);});
+  if(adhChart)adhChart.destroy();
+  adhChart=sparkBar(document.getElementById('chart-adh').getContext('2d'),last14.map(d=>D.fmt(d)),last14.map(d=>scoreByDate[d]??null),'#4fc3f7');
 }
 
-function renderHistory() {
-  const logs = DB.get(DB.keys.schedule, []);
-  const el = document.getElementById('sched-history');
-  if (!logs.length) { el.innerHTML = '<div class="empty">No schedule logs yet.</div>'; return; }
-  const adhColor = { low: 'var(--red)', mid: 'var(--amber)', high: 'var(--green)' };
-  el.innerHTML = logs.slice(0, 14).map(l => {
-    const done = Object.values(l.blocks||{}).filter(Boolean).length;
+function renderHistory(){
+  const logs=DB.get(DB.keys.schedule,[]);
+  const schedule=getSchedule();
+  const el=document.getElementById('sched-history');
+  if(!logs.length){el.innerHTML='<div class="empty">No schedule logs yet.</div>';return;}
+  const adhColor={low:'var(--red)',mid:'var(--amber)',high:'var(--green)'};
+  el.innerHTML=logs.slice(0,14).map(l=>{
+    const done=Object.values(l.blocks||{}).filter(Boolean).length;
     return `<div class="card" style="margin-bottom:8px;">
       <div class="row-between" style="margin-bottom:6px;">
         <span style="font-size:12px;font-family:var(--mono);color:var(--text2);">${D.fmtFull(l.date)}</span>
-        <div class="row" style="gap:6px;">
-          <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${done}/${SCHEDULE.length} blocks</span>
-          ${l.adherence ? `<span style="font-size:11px;color:${adhColor[l.adherence]};font-family:var(--mono);">${l.adherence}</span>` : ''}
+        <div class="row" style="gap:8px;">
+          <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${done}/${schedule.length} blocks</span>
+          ${l.adherence?`<span style="font-size:11px;color:${adhColor[l.adherence]};font-family:var(--mono);">${l.adherence}</span>`:''}
         </div>
       </div>
-      ${l.notes ? `<div style="font-size:12px;color:var(--text2);line-height:1.5;">${l.notes}</div>` : ''}
+      ${l.notes?`<div style="font-size:12px;color:var(--text2);line-height:1.5;">${l.notes}</div>`:''}
     </div>`;
   }).join('');
 }
